@@ -5,23 +5,22 @@ from rockBlock import rockBlockProtocol
 import signal
 import sys
 
-def signal_handler(sig, frame):
-        print('\nExiting.')
-        sys.exit(0)
-
-class MoSend(rockBlockProtocol):
+class RockClient(rockBlockProtocol):
 
     def main(self):
-        rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
-
-        signal.signal(signal.SIGINT, signal_handler)
+        self.rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
+        signal.signal(signal.SIGINT, self.signal_handler)
 
         while True:
             text = raw_input("Message?> ").strip()
             if text != "":
-                print("<{}>".format(text))
-        rb.sendMessage(text.strip())
-        rb.close()
+                print("Sending: <{}>".format(text))
+                self.rb.sendMessage(text.strip())
+
+    def signal_handler(sig, frame):
+        print('\nExiting.')
+        self.rb.close()
+        sys.exit(0)
 
     def rockBlockTxStarted(self):
         print "rockBlockTxStarted"
@@ -33,4 +32,4 @@ class MoSend(rockBlockProtocol):
         print "rockBlockTxSuccess " + str(momsn)
 
 if __name__ == '__main__':
-    MoSend().main()
+    RockClient().main()
