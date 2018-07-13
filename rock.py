@@ -10,8 +10,8 @@ import curses
 class RockGui():
 
     def __init__(self):
-        begin_x = 1;
-        begin_y = 5
+        begin_x = 5;
+        begin_y = 1
         msg_height = 30;
         input_height = 3;
         width = 80
@@ -20,24 +20,36 @@ class RockGui():
         curses.noecho()
         curses.cbreak()
         self.scr.border(0)
-        curses.curs_set(0)
 
-        self.msg = curses.newwin(msg_height, width, begin_y, begin_x)
-        self.msg.box()
-        self.msg.refresh()
+        wintop = curses.newwin(msg_height, width, begin_y, begin_x)
+        wintop.box()
+        wintop.refresh()
 
-        input = curses.newwin(input_height, width, begin_y+msg_height, begin_x)
-        input.box()
+        msg = curses.newwin(msg_height-2, width-2, begin_y+1, begin_x+1)
+        msg.refresh()
+
+        winbot = curses.newwin(input_height, width, begin_y+msg_height, begin_x)
+        winbot.box()
+        winbot.addstr(0, 15, "[q] quit | [s] send message | [r] receive message")
+        winbot.refresh()
+
+        input = curses.newwin(input_height-2, width-2, begin_y+msg_height+1, begin_x+1)
+        input.refresh()
 
         while (True):
-            help = "[q] quit | [s] send message | [r] receive message"
-            input.addstr(0, 15, help)
-            input.refresh()
+            curses.curs_set(0)
             c = input.getkey()
             if c == "q":
                 break
-            #elif c == "m":
-
+            elif c == "m":
+                input.addstr(0, 0, "Message> ")
+                curses.curs_set(1)
+                input.refresh()
+                s = input.getstr()
+                input.erase()
+                # erase
+                # send message
+                # display stuff in message window
 
         curses.endwin()
 
