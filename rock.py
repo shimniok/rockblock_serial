@@ -72,7 +72,7 @@ class RockApp(rockBlockProtocol):
 
         curses.endwin()
         #self.timer_stop()
-        rb.quit()
+        rb.close()
         sys.exit(0)
 
     def rockBlockTxStarted(self):
