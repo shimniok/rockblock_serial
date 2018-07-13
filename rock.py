@@ -69,22 +69,36 @@ class RockApp(rockBlockProtocol):
                 self.msg.move(0, 0)
                 self.msg.addstr("me> {}\n".format(s))
                 rb.sendMessage(s)
+            elif c == "r":
+                self.msg.move(0, 0)
+                rb.messageCheck()
 
         curses.endwin()
         #self.timer_stop()
         rb.close()
         sys.exit(0)
 
+    def rockBlockRxStarted(self):
+        self.msg.addstr("RX Started\n")
+        self.msg.refresh()
+
+    def rockBlockRxFailed(self):
+        self.msg.addstr("RX Failed\n")
+        self.msg.refresh()
+
+    def rockBlockRxReceived(self, mtmsn, data):
+        self.msg.addstr("base> {1} {0}\n".format(mtmsn, data))
+
     def rockBlockTxStarted(self):
-        self.msg.addstr("rockBlockTxStarted\n")
+        self.msg.addstr("TX Started\n")
         self.msg.refresh()
 
     def rockBlockTxFailed(self):
-        self.msg.addstr("rockBlockTxFailed\n")
+        self.msg.addstr("TX Failed\n")
         self.msg.refresh()
 
     def rockBlockTxSuccess(self,momsn):
-        self.msg.addstr("rockBlockTxSuccess " + str(momsn) + "\n")
+        self.msg.addstr("TX Succeeded {}\n".format(str(momsn)))
         self.msg.refresh()
 
 if __name__ == '__main__':
