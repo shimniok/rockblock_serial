@@ -85,11 +85,11 @@ class RockApp(rockBlockProtocol):
         self.msg.refresh()
 
     def rockBlockRxReceived(self, mtmsn, data):
-        self.msg.addstr("base> ")
-        self.msg.addstr("".join(map(chr, data)))
-        self.msg.addstr(" #{1}\n".format(mtmsn))
+        self.msg.addstr("\nbase> ")
+        self.msg.addstr("'{}' #{}\n".format(data, mtmsn))
+	self.msg.refresh()
 
-    def rockBlockRxMessageQueue(self,count):
+    def rockBlockRxMessageQueue(self, count):
         self.msg.addstr("Queue: " + str(count))
 
     def rockBlockTxStarted(self):

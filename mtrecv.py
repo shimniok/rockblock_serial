@@ -9,14 +9,16 @@ class MtRecv(rockBlockProtocol):
         rb.messageCheck()
         rb.close()
 
-    def rockBlockTxStarted(self):
-        print "rockBlockTxStarted"
+    def rockBlockRxStarted(self):
+        print "RX Started"
 
-    def rockBlockTxFailed(self):
-        print "rockBlockTxFailed"
+    def rockBlockRxFailed(self):
+        print "RX Failed"
 
-    def rockBlockTxSuccess(self,momsn):
-        print "rockBlockTxSuccess " + str(momsn)
+    def rockBlockRxReceived(self, mtmsn, data):
+	print "RX Received"
+	print data
+	print mtmsn
 
 if __name__ == '__main__':
     MtRecv().main()
