@@ -20,6 +20,7 @@ class RockGui():
         curses.noecho()
         curses.cbreak()
         self.scr.border(0)
+        curses.curs_set(0)
 
         self.msg = curses.newwin(msg_height, width, begin_y, begin_x)
         self.msg.box()
@@ -29,12 +30,14 @@ class RockGui():
         input.box()
 
         while (True):
-            input.addstr(1, 2, "Command> ")
+            help = "[q] quit | [s] send message | [r] receive message"
+            input.addstr(0, 15, help)
             input.refresh()
             c = input.getkey()
             if c == "q":
                 break
             #elif c == "m":
+
 
         curses.endwin()
 
