@@ -7,6 +7,29 @@ import sys
 import threading
 import curses
 
+class RockGui():
+
+    def __init__(self):
+        begin_x = 20;
+        begin_y = 7
+        height = 10;
+        width = 80
+
+        self.scr = curses.initscr()
+        self.scr.refresh()
+        self.scr.border(0)
+
+        self.msg = curses.newwin(height, width, begin_y, begin_x)
+        self.msg.box()
+        self.msg.refresh()
+
+        self.input = curses.newwin(height, width, begin_y+height, begin_x)
+        self.input.box()
+        self.input.refresh()
+
+    def quit(self):
+        curses.endwin()
+
 class RockClient(rockBlockProtocol):
 
     def main(self):
@@ -14,10 +37,7 @@ class RockClient(rockBlockProtocol):
         signal.signal(signal.SIGINT, self.signal_handler)
         self.timer_start()
 
-        scr = curses.initscr()
-        begin_x = 20; begin_y = 7
-        height = 5; width = 40
-        win = curses.newwin(height, width, begin_y, begin_x)
+        self.gui = RockGui()
 
         while True:
             try:
@@ -34,7 +54,7 @@ class RockClient(rockBlockProtocol):
         self.timer_stop()
         print('\nExiting.')
         self.rb.close()
-        curses.endwin()
+        self.gui.quit()
         sys.exit(0)
 
     def timer_start(self):
