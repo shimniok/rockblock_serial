@@ -17,7 +17,7 @@ class RockApp(rockBlockProtocol):
         begin_y = 1
         msg_height = 30
         input_height = 3
-        stat_height = 1
+        stat_height = 5
         width = 80
 
         self.scr = curses.initscr()
@@ -31,8 +31,8 @@ class RockApp(rockBlockProtocol):
         wintop.refresh()
 
         # msg sits inside wintop
-        msg = curses.newwin(msg_height-2, width-2, begin_y+1, begin_x+1)
-        msg.refresh()
+        self.msg = curses.newwin(msg_height-2, width-2, begin_y+1, begin_x+1)
+        self.msg.refresh()
 
         begin_y += msg_height
 
@@ -49,8 +49,8 @@ class RockApp(rockBlockProtocol):
         begin_y += input_height
 
         # status window sits below winbot, no border
-        self.wstat = curses.newwin(stat_height, width, begin_y, begin_x)
-        self.wstat.refresh()
+        #self.wstat = curses.newwin(stat_height, width, begin_y, begin_x)
+        #self.wstat.refresh()
 
         while (True):
             curses.curs_set(0)
@@ -60,13 +60,15 @@ class RockApp(rockBlockProtocol):
             elif c == "m":
                 input.addstr(0, 0, "Message> ")
                 curses.curs_set(1)
+                curses.echo()
                 input.refresh()
                 s = input.getstr()
                 curses.curs_set(0)
                 input.erase()
-                # send message
+                input.refresh()
+                self.msg.move(0, 0)
+                self.msg.addstr("me> {}\n".format(s))
                 rb.sendMessage(s)
-                wstat.erase()
 
         curses.endwin()
         #self.timer_stop()
@@ -74,16 +76,16 @@ class RockApp(rockBlockProtocol):
         sys.exit(0)
 
     def rockBlockTxStarted(self):
-        self.wstat.addstr(0, 1, "rockBlockTxStarted")
-        self.wstat.refresh()
+        self.msg.addstr("rockBlockTxStarted\n")
+        self.msg.refresh()
 
     def rockBlockTxFailed(self):
-        self.wstat.addstr(0, 1, "rockBlockTxFailed")
-        self.wstat.refresh()
+        self.msg.addstr("rockBlockTxFailed\n")
+        self.msg.refresh()
 
     def rockBlockTxSuccess(self,momsn):
-        self.wstat.addstr(0, 1, "rockBlockTxSuccess " + str(momsn))
-        self.wstat.refresh()
+        self.msg.addstr("rockBlockTxSuccess " + str(momsn) + "\n")
+        self.msg.refresh()
 
 if __name__ == '__main__':
     RockApp().main()
