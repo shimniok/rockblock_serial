@@ -10,66 +10,60 @@ import curses
 class RockGui():
 
     def __init__(self):
-        begin_x = 20;
-        begin_y = 7
-        height = 10;
+        begin_x = 1;
+        begin_y = 5
+        msg_height = 30;
+        input_height = 3;
         width = 80
 
         self.scr = curses.initscr()
-        self.scr.refresh()
+        curses.noecho()
+        curses.cbreak()
         self.scr.border(0)
 
-        self.msg = curses.newwin(height, width, begin_y, begin_x)
+        self.msg = curses.newwin(msg_height, width, begin_y, begin_x)
         self.msg.box()
         self.msg.refresh()
 
-        self.input = curses.newwin(height, width, begin_y+height, begin_x)
-        self.input.box()
-        self.input.refresh()
+        input = curses.newwin(input_height, width, begin_y+msg_height, begin_x)
+        input.box()
 
-    def quit(self):
+        while (True):
+            input.addstr(1, 2, "Command> ")
+            input.refresh()
+            c = input.getkey()
+            if c == "q":
+                break
+            #elif c == "m":
+
         curses.endwin()
 
 class RockClient(rockBlockProtocol):
 
     def main(self):
         self.rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
-        signal.signal(signal.SIGINT, self.signal_handler)
-        self.timer_start()
+        #self.timer_start()
 
         self.gui = RockGui()
 
-        while True:
-            try:
-                text = raw_input("Message?> ").strip()
-                if text != "":
-                    self.timer.cancel()
-                    print("Sending: <{}>".format(text))
-                    self.rb.sendMessage(text.strip())
-                    self.timer.start()
-            except EOFError:
-                self.quit()
+        self.quit()
 
     def quit(self):
-        self.timer_stop()
-        print('\nExiting.')
+        #self.timer_stop()
         self.rb.close()
-        self.gui.quit()
+        print('\nExiting.')
         sys.exit(0)
 
-    def timer_start(self):
-        self.timer = threading.Timer(3.0, self.timer_handler)
-        self.timer.start()
+    #def timer_start(self):
+        #self.timer = threading.Timer(3.0, self.timer_handler)
+        #self.timer.start()
 
-    def timer_stop(self):
-        self.timer.cancel()
+    #def timer_stop(self):
+        #self.timer.cancel()
 
-    def timer_handler(self):
-        print("\nTimer handler <<-- insert mtrecv here")
-        self.timer_start()
-
-    def signal_handler(self, sig, frame):
-        self.quit()
+    #def timer_handler(self):
+        #print("\nTimer handler <<-- insert mtrecv here")
+        #self.timer_start()
 
     def rockBlockTxStarted(self):
         print "rockBlockTxStarted"
