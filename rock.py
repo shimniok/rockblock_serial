@@ -62,13 +62,13 @@ class RockApp(rockBlockProtocol):
                 curses.curs_set(1)
                 curses.echo()
                 input.refresh()
-                s = input.getstr() # read message string
+                self.s = input.getstr() # read message string
                 curses.curs_set(0)
                 curses.noecho()
                 input.erase()
-                self.msg.addstr("me> '{}'".format(s))
                 input.refresh()
-                rb.sendMessage(s)
+		input.move(0,1)
+                rb.sendMessage(self.s)
             elif c == "r":
                 rb.messageCheck()
 
@@ -79,16 +79,16 @@ class RockApp(rockBlockProtocol):
 
     def rockBlockRxStarted(self):
 	self.wstat.erase()
-        self.wstat.addstr(0,1,"RX Started\n")
+        self.wstat.addstr(0,1,"RX Started")
         self.wstat.refresh()
 
     def rockBlockRxFailed(self):
 	self.wstat.erase()
-        self.wstat.addstr(0,1,"RX Failed\n")
+        self.wstat.addstr(0,1,"RX Failed")
         self.wstat.refresh()
 
     def rockBlockRxReceived(self, mtmsn, data):
-        self.msg.addstr("\nbase> ")
+        self.msg.addstr("base> ")
         self.msg.addstr("'{}' #{}\n".format(data, mtmsn))
 	self.msg.refresh()
 
@@ -109,6 +109,8 @@ class RockApp(rockBlockProtocol):
 	self.wstat.erase()
         self.wstat.addstr(0,1,"TX Succeeded {}".format(str(momsn)))
         self.wstat.refresh()
+        self.msg.addstr("me> '{}'\n".format(self.s))
+	self.msg.refresh()
 
 if __name__ == '__main__':
     RockApp().main()
