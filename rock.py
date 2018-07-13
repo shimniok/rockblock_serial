@@ -7,13 +7,17 @@ import sys
 import threading
 import curses
 
-class RockGui():
+class RockApp(rockBlockProtocol):
 
-    def __init__(self):
-        begin_x = 5;
+    def main(self):
+
+        rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
+
+        begin_x = 5
         begin_y = 1
-        msg_height = 30;
-        input_height = 3;
+        msg_height = 30
+        input_height = 3
+        stat_height = 1
         width = 80
 
         self.scr = curses.initscr()
@@ -21,20 +25,32 @@ class RockGui():
         curses.cbreak()
         self.scr.border(0)
 
+        # top enclosing window so we can draw a box
         wintop = curses.newwin(msg_height, width, begin_y, begin_x)
         wintop.box()
         wintop.refresh()
 
+        # msg sits inside wintop
         msg = curses.newwin(msg_height-2, width-2, begin_y+1, begin_x+1)
         msg.refresh()
 
-        winbot = curses.newwin(input_height, width, begin_y+msg_height, begin_x)
+        begin_y += msg_height
+
+        # bottom enclosing window so we can draw a box
+        winbot = curses.newwin(input_height, width, begin_y, begin_x)
         winbot.box()
         winbot.addstr(0, 15, "[q] quit | [s] send message | [r] receive message")
         winbot.refresh()
 
-        input = curses.newwin(input_height-2, width-2, begin_y+msg_height+1, begin_x+1)
+        # input sits inside winbot
+        input = curses.newwin(input_height-2, width-2, begin_y+1, begin_x+1)
         input.refresh()
+
+        begin_y += input_height
+
+        # status window sits below winbot, no border
+        self.wstat = curses.newwin(stat_height, width, begin_y, begin_x)
+        self.wstat.refresh()
 
         while (True):
             curses.curs_set(0)
@@ -46,48 +62,28 @@ class RockGui():
                 curses.curs_set(1)
                 input.refresh()
                 s = input.getstr()
+                curses.curs_set(0)
                 input.erase()
-                # erase
                 # send message
-                # display stuff in message window
+                rb.sendMessage(s)
+                wstat.erase()
 
         curses.endwin()
-
-class RockClient(rockBlockProtocol):
-
-    def main(self):
-        self.rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
-        #self.timer_start()
-
-        self.gui = RockGui()
-
-        self.quit()
-
-    def quit(self):
         #self.timer_stop()
-        self.rb.close()
-        print('\nExiting.')
+        rb.quit()
         sys.exit(0)
 
-    #def timer_start(self):
-        #self.timer = threading.Timer(3.0, self.timer_handler)
-        #self.timer.start()
-
-    #def timer_stop(self):
-        #self.timer.cancel()
-
-    #def timer_handler(self):
-        #print("\nTimer handler <<-- insert mtrecv here")
-        #self.timer_start()
-
     def rockBlockTxStarted(self):
-        print "rockBlockTxStarted"
+        self.wstat.addstr(0, 1, "rockBlockTxStarted")
+        self.wstat.refresh()
 
     def rockBlockTxFailed(self):
-        print "rockBlockTxFailed"
+        self.wstat.addstr(0, 1, "rockBlockTxFailed")
+        self.wstat.refresh()
 
     def rockBlockTxSuccess(self,momsn):
-        print "rockBlockTxSuccess " + str(momsn)
+        self.wstat.addstr(0, 1, "rockBlockTxSuccess " + str(momsn))
+        self.wstat.refresh()
 
 if __name__ == '__main__':
-    RockClient().main()
+    RockApp().main()
