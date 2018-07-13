@@ -66,11 +66,9 @@ class RockApp(rockBlockProtocol):
                 curses.curs_set(0)
                 input.erase()
                 input.refresh()
-                self.msg.move(0, 0)
                 self.msg.addstr("me> {}\n".format(s))
                 rb.sendMessage(s)
             elif c == "r":
-                self.msg.move(0, 0)
                 rb.messageCheck()
 
         curses.endwin()
@@ -87,7 +85,12 @@ class RockApp(rockBlockProtocol):
         self.msg.refresh()
 
     def rockBlockRxReceived(self, mtmsn, data):
-        self.msg.addstr("base> {1} {0}\n".format(mtmsn, data))
+        self.msg.addstr("base> ")
+        self.msg.addstr("".join(map(chr, data)))
+        self.msg.addstr(" #{1}\n".format(mtmsn))
+
+    def rockBlockRxMessageQueue(self,count):
+        self.msg.addstr("Queue: " + str(count))
 
     def rockBlockTxStarted(self):
         self.msg.addstr("TX Started\n")
