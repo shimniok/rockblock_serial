@@ -387,7 +387,6 @@ class rockBlock(object):
             if(self.callback != None and callable(self.callback.rockBlockRxReceived) ):
                 self.callback.rockBlockRxReceived(mtMsn, "")
         else:
-            print "process else\n"
             content = response[2:-2]
             if(self.callback != None and callable(self.callback.rockBlockRxReceived) ):
                 self.callback.rockBlockRxReceived(mtMsn, content)
