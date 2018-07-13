@@ -5,6 +5,7 @@ from rockBlock import rockBlockProtocol
 import signal
 import sys
 import threading
+import curses
 
 class RockClient(rockBlockProtocol):
 
@@ -12,6 +13,11 @@ class RockClient(rockBlockProtocol):
         self.rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
         signal.signal(signal.SIGINT, self.signal_handler)
         self.timer_start()
+
+        scr = curses.initscr()
+        begin_x = 20; begin_y = 7
+        height = 5; width = 40
+        win = curses.newwin(height, width, begin_y, begin_x)
 
         while True:
             try:
@@ -28,6 +34,7 @@ class RockClient(rockBlockProtocol):
         self.timer_stop()
         print('\nExiting.')
         self.rb.close()
+        curses.endwin()
         sys.exit(0)
 
     def timer_start(self):
