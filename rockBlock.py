@@ -54,90 +54,60 @@ class rockBlock(object):
         self.autoSession = True     #When True, we'll automatically initiate additional sessions if more messages to download
 
         try:
-
             self.s = serial.Serial(self.portId, 19200, timeout=5)
-
             if( self._configurePort() ):
-
                 self.ping() #KEEP SACRIFICIAL!
-
                 self.s.timeout = 60
-
                 if( self.ping() ):
-
                     if(self.callback != None and callable(self.callback.rockBlockConnected) ):
                         self.callback.rockBlockConnected()
-
                         return
-
-
             self.close()
             raise rockBlockException()
-
         except (Exception):
-
             raise rockBlockException
 
 
     #Ensure that the connection is still alive
     def ping(self):
         self._ensureConnectionStatus()
-
         command = "AT"
-
         self.s.write(command + "\r")
-
         if( self.s.readline().strip() == command ):
-
             if( self.s.readline().strip() == "OK" ):
-
                 return True
-
         return False
+
 
     #Handy function to check the connection is still alive, else throw an Exception
     def pingception(self):
         self._ensureConnectionStatus()
-
         self.s.timeout = 5
         if(self.ping() == False):
-
             raise rockBlockException
-
         self.s.timeout = 60
+
 
     def requestSignalStrength(self):
         self._ensureConnectionStatus()
-
         command = "AT+CSQ"
-
         self.s.write(command + "\r")
-
         if( self.s.readline().strip() == command):
-
             response = self.s.readline().strip()
-
             if( response.find("+CSQ") >= 0 ):
-
                 self.s.readline().strip()    #OK
                 self.s.readline().strip()    #BLANK
-
                 if( len(response) == 6):
-
                     return int( response[5] )
-
         return -1
 
 
     def messageCheck(self):
         self._ensureConnectionStatus()
-
         if(self.callback != None and callable(self.callback.rockBlockRxStarted) ):
             self.callback.rockBlockRxStarted()
-
         if( self._attemptConnection() and self._attemptSession() ):
             return True
-
         else:
             if(self.callback != None and callable(self.callback.rockBlockRxFailed) ):
                 self.callback.rockBlockRxFailed()
@@ -145,14 +115,12 @@ class rockBlock(object):
 
     def networkTime(self):
         self._ensureConnectionStatus()
-
         command = "AT-MSSTM"
         self.s.write(command + "\r")
         if(self.s.readline().strip() == command):
             response = self.s.readline().strip()
             self.s.readline().strip()   #BLANK
             self.s.readline().strip()   #OK
-
             if( not "no network service" in response ):
                 utc = int(response[8:], 16)
                 utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
@@ -225,14 +193,15 @@ class rockBlock(object):
                         return True
         return False
 
+
     def close(self):
         if(self.s != None):
             self.s.close()
             self.s = None
 
+
     @staticmethod
     def listPorts():
-
         if sys.platform.startswith('win'):
             ports = ['COM' + str(i + 1) for i in range(256)]
         elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
@@ -249,6 +218,7 @@ class rockBlock(object):
             except (OSError, serial.SerialException):
                 pass
         return result
+
 
     #Private Methods - Don't call these directly!
     def _queueMessage(self, msg):
@@ -308,17 +278,11 @@ class rockBlock(object):
 
     def _disableRingAlerts(self):
         self._ensureConnectionStatus()
-
         command = "AT+SBDMTA=0"
-
         self.s.write(command + "\r")
-
         if( self.s.readline().strip() == command ):
-
             if( self.s.readline().strip() == "OK" ):
-
                 return True
-
         return False
 
 
