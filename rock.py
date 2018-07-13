@@ -15,7 +15,7 @@ class RockApp(rockBlockProtocol):
 
         begin_x = 5
         begin_y = 1
-        msg_height = 30
+        msg_height = 15
         input_height = 3
         stat_height = 5
         width = 80
