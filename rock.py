@@ -6,19 +6,25 @@ import signal
 import sys
 import threading
 import curses
+import argparse
 
 class RockApp(rockBlockProtocol):
 
     def main(self):
 
-        rb = rockBlock.rockBlock("/dev/ttyUSB0", self)
+        import argparse
+        parser = argparse.ArgumentParser()
+        parser.add_argument("-d", "--device", 
+            help="unix serial device connected to rockBlock", 
+            default="/dev/ttyUSB0")
+        args = parser.parse_args()
 
-        begin_x = 5
+        begin_x = 2
         begin_y = 1
         msg_height = 15
         input_height = 3
         stat_height = 5
-        width = 80
+        width = 76
 
         self.scr = curses.initscr()
         curses.noecho()
@@ -39,7 +45,7 @@ class RockApp(rockBlockProtocol):
         # bottom enclosing window so we can draw a box
         winbot = curses.newwin(input_height, width, begin_y, begin_x)
         winbot.box()
-        winbot.addstr(0, 15, "[q] quit | [s] send message | [r] receive message")
+        winbot.addstr(0, msg_height, "[q] quit | [s] send message | [r] receive message")
         winbot.refresh()
 
         # input sits inside winbot
