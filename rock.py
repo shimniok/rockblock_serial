@@ -28,15 +28,18 @@ class RockApp(rockBlockProtocol):
         self.scr = curses.initscr()
         curses.start_color()
         curses.use_default_colors()
-        curses.init_pair(1, curses.COLOR_RED, -1)
-        curses.init_pair(2, curses.COLOR_GREEN, -1)
-        curses.init_pair(3, curses.COLOR_CYAN, -1)
-        curses.init_pair(4, curses.COLOR_YELLOW, -1)
         curses.noecho()
         curses.cbreak()
         self.scr.border(0)
-        
-        print(curses.COLOR_PAIRS)
+
+        curses.init_pair(1, curses.COLOR_RED, -1)
+        self.red = curses.color_pair(1)
+        curses.init_pair(2, curses.COLOR_GREEN, -1)
+        self.green = curses.color_pair(2)
+        curses.init_pair(3, curses.COLOR_CYAN, -1)
+        self.cyan = curses.color_pair(3)
+        curses.init_pair(4, curses.COLOR_YELLOW, -1)
+        self.yellow = curses.color_pair(4)
 
         # top enclosing window so we can draw a box
         wintop = curses.newwin(msg_height, self.width, begin_y, begin_x)
@@ -53,8 +56,8 @@ class RockApp(rockBlockProtocol):
         winbot = curses.newwin(input_height, self.width, begin_y, begin_x)
         winbot.box()
         helptxt = "[q] quit | [s] send message | [r] receive message"
-        winbot.addstr(0, self.center(helptxt), helptxt, curses.color_pair(4))
-        winbot.addstr(input_height-1, self.center(args.device), args.device)
+        winbot.addstr(0, self.center(helptxt), helptxt, self.yellow)
+        winbot.addstr(input_height-1, self.center(args.device), args.device, self.cyan)
         winbot.refresh()
 
         rb = rockBlock.rockBlock(args.device, self)
@@ -122,7 +125,7 @@ class RockApp(rockBlockProtocol):
 
 
     def rockBlockRxReceived(self, mtmsn, data):
-        self.msg.addstr("base> '{}' #{}\n".format(data, mtmsn), curses.color_pair(13))
+        self.msg.addstr("base> '{}' #{}\n".format(data, mtmsn), curses.color_pair(2))
         self.msg.refresh()
 
 
