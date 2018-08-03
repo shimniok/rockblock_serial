@@ -7,6 +7,7 @@ import sys
 import threading
 import curses
 import argparse
+import time # temporary for delay
 
         
 class RockApp(rockBlockProtocol):
@@ -48,6 +49,7 @@ class RockApp(rockBlockProtocol):
 
         # msg sits inside wintop
         self.msg = curses.newwin(msg_height-2, self.width-2, begin_y+1, begin_x+1)
+        self.msg.scrollok(True)
         self.msg.refresh()
 
         begin_y += msg_height
