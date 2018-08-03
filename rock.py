@@ -8,6 +8,7 @@ import threading
 import curses
 import argparse
 
+        
 class RockApp(rockBlockProtocol):
 
     def main(self):
@@ -22,9 +23,9 @@ class RockApp(rockBlockProtocol):
         begin_x = 2
         begin_y = 1
         msg_height = 15
-        input_height = 3
+        input_height = 4
         stat_height = 5
-        width = 76
+        self.width = 76
 
         self.scr = curses.initscr()
         curses.noecho()
@@ -32,30 +33,34 @@ class RockApp(rockBlockProtocol):
         self.scr.border(0)
 
         # top enclosing window so we can draw a box
-        wintop = curses.newwin(msg_height, width, begin_y, begin_x)
+        wintop = curses.newwin(msg_height, self.width, begin_y, begin_x)
         wintop.box()
         wintop.refresh()
 
         # msg sits inside wintop
-        self.msg = curses.newwin(msg_height-2, width-2, begin_y+1, begin_x+1)
+        self.msg = curses.newwin(msg_height-2, self.width-2, begin_y+1, begin_x+1)
         self.msg.refresh()
 
         begin_y += msg_height
 
         # bottom enclosing window so we can draw a box
-        winbot = curses.newwin(input_height, width, begin_y, begin_x)
+        winbot = curses.newwin(input_height, self.width, begin_y, begin_x)
         winbot.box()
-        winbot.addstr(0, msg_height, "[q] quit | [s] send message | [r] receive message")
+        helptxt = "[q] quit | [s] send message | [r] receive message"
+        winbot.addstr(0, self.center(helptxt), helptxt)
+        winbot.addstr(input_height-1, self.center(args.device), args.device)
         winbot.refresh()
 
+        rb = rockBlock.rockBlock(args.device, self)
+
         # input sits inside winbot
-        input = curses.newwin(input_height-2, width-2, begin_y+1, begin_x+1)
+        input = curses.newwin(input_height-2, self.width-2, begin_y+1, begin_x+1)
         input.refresh()
 
         begin_y += input_height
 
         # status window sits below winbot, no border
-        self.wstat = curses.newwin(stat_height, width, begin_y, begin_x)
+        self.wstat = curses.newwin(stat_height, self.width, begin_y, begin_x)
         self.wstat.refresh()
 
         while (True):
@@ -73,7 +78,7 @@ class RockApp(rockBlockProtocol):
                 curses.noecho()
                 input.erase()
                 input.refresh()
-		input.move(0,1)
+                input.move(0,1)
                 rb.sendMessage(self.s)
             elif c == "r":
                 rb.messageCheck()
@@ -83,40 +88,48 @@ class RockApp(rockBlockProtocol):
         rb.close()
         sys.exit(0)
 
+
+    def center(self, string):
+        strlen = len(string)
+        if (strlen < self.width):
+            center = (self.width/2 - strlen/2)
+        return center
+        
+        
     def rockBlockRxStarted(self):
-	self.wstat.erase()
+        self.wstat.erase()
         self.wstat.addstr(0,1,"RX Started")
         self.wstat.refresh()
 
     def rockBlockRxFailed(self):
-	self.wstat.erase()
+        self.wstat.erase()
         self.wstat.addstr(0,1,"RX Failed")
         self.wstat.refresh()
 
     def rockBlockRxReceived(self, mtmsn, data):
         self.msg.addstr("base> ")
         self.msg.addstr("'{}' #{}\n".format(data, mtmsn))
-	self.msg.refresh()
+        self.msg.refresh()
 
     def rockBlockRxMessageQueue(self, count):
         self.wstat.addstr(0,1,"Queue: " + str(count))
 
     def rockBlockTxStarted(self):
-	self.wstat.erase()
+        self.wstat.erase()
         self.wstat.addstr("TX Started")
         self.wstat.refresh()
 
     def rockBlockTxFailed(self):
-	self.wstat.erase()
+        self.wstat.erase()
         self.wstat.addstr(0,1,"TX Failed")
         self.wstat.refresh()
 
     def rockBlockTxSuccess(self,momsn):
-	self.wstat.erase()
+        self.wstat.erase()
         self.wstat.addstr(0,1,"TX Succeeded {}".format(str(momsn)))
         self.wstat.refresh()
         self.msg.addstr("me> '{}'\n".format(self.s))
-	self.msg.refresh()
+        self.msg.refresh()
 
 if __name__ == '__main__':
     RockApp().main()
