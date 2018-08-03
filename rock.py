@@ -88,6 +88,12 @@ class RockApp(rockBlockProtocol):
         rb.close()
         sys.exit(0)
 
+    def right(self, string):
+        strlen = len(string)
+        if (strlen < self.width):
+            right = (self.width - strlen)
+        return right
+
 
     def center(self, string):
         strlen = len(string)
