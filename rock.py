@@ -115,22 +115,26 @@ class RockApp(rockBlockProtocol):
     def rockBlockRxStarted(self):
         self.wstat.erase()
         self.wstat.addstr(0,1,"RX Started")
+        self.wstat.clrtoeol()
         self.wstat.refresh()
 
 
     def rockBlockRxFailed(self):
         self.wstat.erase()
-        self.wstat.addstr(0,1,"RX Failed")
+        self.wstat.addstr(0,1,"RX Failed", self.red)
+        self.wstat.clrtoeol()
         self.wstat.refresh()
 
 
     def rockBlockRxReceived(self, mtmsn, data):
-        self.msg.addstr("base> '{}' #{}\n".format(data, mtmsn), curses.color_pair(2))
+        self.msg.addstr("base> '{}' #{}\n".format(data, mtmsn), self.green)
         self.msg.refresh()
 
 
     def rockBlockRxMessageQueue(self, count):
         self.wstat.addstr(0,1,"Queue: " + str(count))
+        self.wstat.clrtoeol()
+        self.wstat.refresh()
 
 
     def rockBlockTxStarted(self):
@@ -141,13 +145,14 @@ class RockApp(rockBlockProtocol):
 
     def rockBlockTxFailed(self):
         self.wstat.erase()
-        self.wstat.addstr(0,1,"TX Failed")
+        self.wstat.addstr(0,1,"TX Failed", self.red)
         self.wstat.refresh()
 
 
     def rockBlockTxSuccess(self,momsn):
         self.wstat.erase()
-        self.wstat.addstr(0,1,"TX Succeeded {}".format(str(momsn)))
+        self.wstat.addstr(0,1,"TX Succeeded {}".format(str(momsn)), self.green)
+        self.wstat.clrtoeol()
         self.wstat.refresh()
         self.msg.addstr("me> '{}'\n".format(self.s))
         self.msg.refresh()
