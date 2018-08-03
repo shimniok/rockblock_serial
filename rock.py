@@ -12,8 +12,6 @@ import argparse
 class RockApp(rockBlockProtocol):
 
     def main(self):
-
-        import argparse
         parser = argparse.ArgumentParser()
         parser.add_argument("-d", "--device", 
             help="unix serial device connected to rockBlock", 
@@ -88,6 +86,7 @@ class RockApp(rockBlockProtocol):
         rb.close()
         sys.exit(0)
 
+
     def right(self, string):
         strlen = len(string)
         if (strlen < self.width):
@@ -107,28 +106,34 @@ class RockApp(rockBlockProtocol):
         self.wstat.addstr(0,1,"RX Started")
         self.wstat.refresh()
 
+
     def rockBlockRxFailed(self):
         self.wstat.erase()
         self.wstat.addstr(0,1,"RX Failed")
         self.wstat.refresh()
+
 
     def rockBlockRxReceived(self, mtmsn, data):
         self.msg.addstr("base> ")
         self.msg.addstr("'{}' #{}\n".format(data, mtmsn))
         self.msg.refresh()
 
+
     def rockBlockRxMessageQueue(self, count):
         self.wstat.addstr(0,1,"Queue: " + str(count))
+
 
     def rockBlockTxStarted(self):
         self.wstat.erase()
         self.wstat.addstr("TX Started")
         self.wstat.refresh()
 
+
     def rockBlockTxFailed(self):
         self.wstat.erase()
         self.wstat.addstr(0,1,"TX Failed")
         self.wstat.refresh()
+
 
     def rockBlockTxSuccess(self,momsn):
         self.wstat.erase()
@@ -136,6 +141,7 @@ class RockApp(rockBlockProtocol):
         self.wstat.refresh()
         self.msg.addstr("me> '{}'\n".format(self.s))
         self.msg.refresh()
+
 
 if __name__ == '__main__':
     RockApp().main()
