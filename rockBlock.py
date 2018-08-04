@@ -55,18 +55,18 @@ class rockBlock(object):
 
         try:
             self.s = serial.Serial(self.portId, 19200, timeout=5)
-            if( self._configurePort() ):
-                self.ping() #KEEP SACRIFICIAL!
-                self.s.timeout = 60
-                if( self.ping() ):
-                    if(self.callback != None and callable(self.callback.rockBlockConnected) ):
-                        self.callback.rockBlockConnected()
-                        return
-            self.close()
-            raise rockBlockException("unable to connect to device")
-        except (Exception):
-            raise rockBlockException(Exception)
+            
+            if not (self._enableEcho() and self._disableFlowControl and self._disableRingAlerts()):
+                self.close()
+                raise rockBlockException("unable to configure port")
 
+            self.check_connection()
+      
+        except ValueError:
+            raise rockBlockException("ValueError on parameters sent to serial.Serial")
+        except serial.SerialException:
+            raise rockBlockException("SerialError encountered")
+            
 
     #Ensure that the connection is still alive
     def ping(self):
@@ -79,13 +79,15 @@ class rockBlock(object):
         return False
 
 
-    #Handy function to check the connection is still alive, else throw an Exception
-    def pingception(self):
-        self._ensureConnectionStatus()
+    #Handy function to check if connection is still alive, callback based on result
+    def check_connection(self):
         self.s.timeout = 5
-        if(self.ping() == False):
-            raise rockBlockException("unable to connect to device")
-        self.s.timeout = 60
+        if (self.ping()):
+            if self.callback != None and callable(self.callback.rockBlockConnected):
+                self.callback.rockBlockConnected()
+        else:
+            if self.callback != None and callable(self.callback.rockBlockDisconnected):
+                self.callback.rockBlockDisconnected()
 
 
     def requestSignalStrength(self):
@@ -245,13 +247,6 @@ class rockBlock(object):
                 self.s.readline().strip()   #OK
                 return result
         return False
-
-
-    def _configurePort(self):
-        if( self._enableEcho() and self._disableFlowControl and self._disableRingAlerts() and self.ping() ):
-            return True
-        else:
-            return False
 
 
     def _enableEcho(self):
@@ -419,4 +414,4 @@ class rockBlock(object):
 
     def _ensureConnectionStatus(self):
         if(self.s == None or self.s.isOpen() == False):
-            raise rockBlockException()
+            raise rockBlockException("failed connection status")

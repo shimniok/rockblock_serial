@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rockBlock
-from rockBlock import rockBlockProtocol
+from rockBlock import rockBlockProtocol, rockBlockException
 import signal
 import sys
 import threading
@@ -18,6 +18,7 @@ class RockApp(rockBlockProtocol):
             help="unix serial device connected to rockBlock", 
             default="/dev/ttyUSB0")
         args = parser.parse_args()
+        self.device = args.device
 
         self.scr = curses.initscr()
         curses.start_color()
@@ -60,11 +61,11 @@ class RockApp(rockBlockProtocol):
         begin_y += msg_height
 
         # bottom enclosing window so we can draw a box
-        win2 = curses.newwin(self.w_input_height, self.width, begin_y, begin_x)
-        win2.box()
+        self.win2 = curses.newwin(self.w_input_height, self.width, begin_y, begin_x)
+        self.win2.box()
         helptxt = "[q] quit | [s] send message | [r] receive message"
-        win2.addstr(0, self.center(helptxt), helptxt, self.yellow)
-        win2.refresh()
+        self.win2.addstr(0, self.center(helptxt), helptxt, self.yellow)
+        self.win2.refresh()
 
         # input sits inside winbot
         win_input = curses.newwin(self.w_input_height-2, self.width-2, begin_y+1, begin_x+1)
@@ -78,9 +79,9 @@ class RockApp(rockBlockProtocol):
 
         # initialize rockBlock interface
         try:
-            rb = rockBlock.rockBlock(args.device, self)          
-        except rockBlock.rockBlockException as e:
-            pass
+            rb = rockBlock.rockBlock(self.device, self)          
+        except rockBlockException as err:
+            self.print_status("{0}".format(err))
 
         while (True):
             curses.curs_set(0)
@@ -107,18 +108,18 @@ class RockApp(rockBlockProtocol):
         rb.close()
         sys.exit(0)
 
+    def print_status(self, status):
+        self.w_status.erase()
+        self.w_status.addstr(0,1, status, self.red)
+        self.w_status.clrtoeol()
+        self.w_status.refresh()
 
     def right(self, string):
         strlen = len(string)
         if (strlen < self.width):
             right = (self.width - strlen)
         return right
-
-
-    def display_device(self, device, status):
-        color = self.cyan
-        win2.addstr(self.w_input_height-1, self.center(device), device, color)
-
+        
 
     def center(self, string):
         strlen = len(string)
@@ -165,11 +166,16 @@ class RockApp(rockBlockProtocol):
 
 
     def rockBlockConnected(self):
-        self.w_status.erase()
-        self.w_status.addstr(0,1,"Connected")
-        self.w_status.clrtoeol()
-        self.w_status.refresh()
+        self.win2.addstr(self.w_input_height-1, self.center(self.device), self.device, self.cyan)
+        self.win2.refresh()
         return
+
+
+    def rockBlockDisonnected(self):
+        self.win2.addstr(self.w_input_height-1, self.center(self.device), self.device, self.red)
+        self.win2.refresh()
+        return
+
 
     def rockBlockTxStarted(self):
         self.w_status.erase()
