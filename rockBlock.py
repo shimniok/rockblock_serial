@@ -39,8 +39,27 @@ class rockBlockProtocol(object):
     def rockBlockTxFailed(self):pass
     def rockBlockTxSuccess(self,momsn):pass
 
-class rockBlockException(Exception):
-    pass
+
+class RockBlockException(Exception):
+    def __init__(self, msg=None):
+        if msg is None:
+            msg = "General Error"
+        super(RockBlockException, self).__init__(msg)
+
+
+class RockBlockSerialException(RockBlockException):
+    def __init__(self, msg=None):
+        if msg is None:
+            msg = "Serial Error"
+        super(RockBlockSerialException, self).__init__(msg)
+
+
+class RockBlockPortException(RockBlockException):
+    def __init__(self, msg=None):
+        if msg is None:
+            msg = "Port Config Error"
+        super(RockBlockPortException, self).__init__(msg)
+
 
 class rockBlock(object):
 
@@ -55,17 +74,15 @@ class rockBlock(object):
 
         try:
             self.s = serial.Serial(self.portId, 19200, timeout=5)
-            
             if not (self._enableEcho() and self._disableFlowControl and self._disableRingAlerts()):
                 self.close()
-                raise rockBlockException("unable to configure port")
-
+                raise RockBlockPortException
             self.check_connection()
       
         except ValueError:
-            raise rockBlockException("ValueError on parameters sent to serial.Serial")
+            raise RockBlockSerialException("Bad parameters for Serial")
         except serial.SerialException:
-            raise rockBlockException("SerialError encountered")
+            raise RockBlockSerialException
             
 
     #Ensure that the connection is still alive
@@ -226,7 +243,7 @@ class rockBlock(object):
     def _queueMessage(self, msg):
         self._ensureConnectionStatus()
         if( len(msg) > 340):
-            raise rockBlockException("message must be 340 bytes or less")
+            raise RockBlockException("message must be 340 bytes or less")
 
         command = "AT+SBDWB=" + str( len(msg) )
         self.s.write(command + "\r")
@@ -377,7 +394,7 @@ class rockBlock(object):
         self.s.write("AT+SBDRB\r")
         response = self.s.readline().strip().replace("AT+SBDRB\r","").strip()
         if( response == "OK" ):
-            raise rockBlockException("Unexpectd modem response: no message content")
+            raise RockBlockException("Unexpectd modem response: no message content")
             if(self.callback != None and callable(self.callback.rockBlockRxReceived) ):
                 self.callback.rockBlockRxReceived(mtMsn, "")
         else:
@@ -414,4 +431,4 @@ class rockBlock(object):
 
     def _ensureConnectionStatus(self):
         if(self.s == None or self.s.isOpen() == False):
-            raise rockBlockException("failed connection status")
+            raise RockBlockException("failed connection status")

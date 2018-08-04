@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import rockBlock
-from rockBlock import rockBlockProtocol, rockBlockException
+from rockBlock import RockBlockProtocol, RockBlockException
 import signal
 import sys
 import threading
@@ -10,7 +10,7 @@ import argparse
 import time # temporary for delay
 
         
-class RockApp(rockBlockProtocol):
+class RockApp(RockBlockProtocol):
 
     def main(self):
         parser = argparse.ArgumentParser()
@@ -80,13 +80,16 @@ class RockApp(rockBlockProtocol):
         # initialize rockBlock interface
         try:
             rb = rockBlock.rockBlock(self.device, self)          
-        except rockBlockException as err:
-            self.print_status("{0}".format(err))
+        except RockBlockException as err:
+            curses.endwin()
+            print("Error: {}: {}\n".format(self.device, err))
+            sys.exit(1)
 
         while (True):
             curses.curs_set(0)
             c = win_input.getkey()
             if c == "q":
+                rb.close()
                 break
             elif c == "s":
                 win_input.addstr(0, 0, "Message> ")
@@ -102,10 +105,9 @@ class RockApp(rockBlockProtocol):
                 rb.sendMessage(self.s)
             elif c == "r":
                 rb.messageCheck()
-
+        
         curses.endwin()
         #self.timer_stop()
-        rb.close()
         sys.exit(0)
 
     def print_status(self, status):
