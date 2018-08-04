@@ -19,19 +19,23 @@ class RockApp(rockBlockProtocol):
             default="/dev/ttyUSB0")
         args = parser.parse_args()
 
-        begin_x = 2
-        begin_y = 1
-        msg_height = 15
-        input_height = 4
-        stat_height = 5
-        self.width = 76
-
         self.scr = curses.initscr()
         curses.start_color()
         curses.use_default_colors()
         curses.noecho()
         curses.cbreak()
         self.scr.border(0)
+
+        # compute window sizes to fit screen
+        maxy, maxx = self.scr.getmaxyx()
+        margin_x = 1
+        margin_y = 1
+        self.width = maxx - 2*margin_x;
+        stat_height = 1
+        input_height = 3
+        msg_height = maxy - stat_height - input_height - 2*margin_y + 1
+        begin_x = margin_x
+        begin_y = margin_y
 
         curses.init_pair(1, curses.COLOR_RED, -1)
         self.red = curses.color_pair(1)
