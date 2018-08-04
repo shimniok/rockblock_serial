@@ -37,6 +37,7 @@ class RockApp(rockBlockProtocol):
         begin_x = margin_x
         begin_y = margin_y
 
+        # initialize colors
         curses.init_pair(1, curses.COLOR_RED, -1)
         self.red = curses.color_pair(1)
         curses.init_pair(2, curses.COLOR_GREEN, -1)
@@ -47,11 +48,11 @@ class RockApp(rockBlockProtocol):
         self.yellow = curses.color_pair(4)
 
         # top enclosing window so we can draw a box
-        wintop = curses.newwin(msg_height, self.width, begin_y, begin_x)
-        wintop.box()
-        wintop.refresh()
+        win1 = curses.newwin(msg_height, self.width, begin_y, begin_x)
+        win1.box()
+        win1.refresh()
 
-        # msg sits inside wintop
+        # msg window sits inside win1
         self.msg = curses.newwin(msg_height-2, self.width-2, begin_y+1, begin_x+1)
         self.msg.scrollok(True)
         self.msg.refresh()
@@ -59,13 +60,14 @@ class RockApp(rockBlockProtocol):
         begin_y += msg_height
 
         # bottom enclosing window so we can draw a box
-        winbot = curses.newwin(input_height, self.width, begin_y, begin_x)
-        winbot.box()
+        win2 = curses.newwin(input_height, self.width, begin_y, begin_x)
+        win2.box()
         helptxt = "[q] quit | [s] send message | [r] receive message"
-        winbot.addstr(0, self.center(helptxt), helptxt, self.yellow)
-        winbot.addstr(input_height-1, self.center(args.device), args.device, self.cyan)
-        winbot.refresh()
+        win2.addstr(0, self.center(helptxt), helptxt, self.yellow)
+        win2.addstr(input_height-1, self.center(args.device), args.device, self.cyan)
+        win2.refresh()
 
+        # initialize rockBlock interface
         rb = rockBlock.rockBlock(args.device, self)
 
         # input sits inside winbot
