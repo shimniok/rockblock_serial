@@ -18,7 +18,7 @@ import sys
 import time
 import serial
 
-class rockBlockProtocol(object):
+class RockBlockProtocol(object):
 
     def rockBlockConnected(self):pass
     def rockBlockDisconnected(self):pass
@@ -61,7 +61,7 @@ class RockBlockPortException(RockBlockException):
         super(RockBlockPortException, self).__init__(msg)
 
 
-class rockBlock(object):
+class RockBlock(object):
 
     IRIDIUM_EPOCH = 1399818235000   
     #May 11, 2014, at 14:23:55 (This will be 're-epoched' every couple of years!)

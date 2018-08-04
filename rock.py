@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
-import rockBlock
-from rockBlock import RockBlockProtocol, RockBlockException
+from rockBlock import RockBlock, RockBlockProtocol, RockBlockException
 import signal
 import sys
 import threading
@@ -15,7 +14,7 @@ class RockApp(RockBlockProtocol):
     def main(self):
         parser = argparse.ArgumentParser()
         parser.add_argument("-d", "--device", 
-            help="unix serial device connected to rockBlock", 
+            help="specify serial device to communicate with RockBLOCK", 
             default="/dev/ttyUSB0")
         args = parser.parse_args()
         self.device = args.device
@@ -77,9 +76,9 @@ class RockApp(RockBlockProtocol):
         self.w_status = curses.newwin(self.w_status_height, self.width, begin_y, begin_x)
         self.w_status.refresh()
 
-        # initialize rockBlock interface
+        # initialize RockBlock interface
         try:
-            rb = rockBlock.rockBlock(self.device, self)          
+            rb = RockBlock(self.device, self)          
         except RockBlockException as err:
             curses.endwin()
             print("Error: {}: {}\n".format(self.device, err))
