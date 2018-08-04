@@ -6,7 +6,6 @@ import sys
 import threading
 import curses
 import argparse
-import time # temporary for delay
 
         
 class RockApp(RockBlockProtocol):
