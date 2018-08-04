@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from rockBlock import RockBlock, RockBlockProtocol, RockBlockException
+from rockblock import RockBlock, RockBlockProtocol, RockBlockException
 import signal
 import sys
 import threading
