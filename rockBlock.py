@@ -63,7 +63,7 @@ class rockBlock(object):
                         self.callback.rockBlockConnected()
                         return
             self.close()
-            raise rockBlockException("unable to connect to rockBlock")
+            raise rockBlockException("unable to connect to device")
         except (Exception):
             raise rockBlockException(Exception)
 
@@ -84,7 +84,7 @@ class rockBlock(object):
         self._ensureConnectionStatus()
         self.s.timeout = 5
         if(self.ping() == False):
-            raise rockBlockException
+            raise rockBlockException("unable to connect to device")
         self.s.timeout = 60
 
 
@@ -368,7 +368,7 @@ class rockBlock(object):
                 if(self.callback != None and callable(self.callback.rockBlockSignalFail) ):
                     self.callback.rockBlockSignalFail()
                 return False
-            self.callback.rockBlockSignalUpdate( signal )
+            self.callback.rockBlockSignalUpdate(signal)
             if( signal >= SIGNAL_THRESHOLD ):
                 if(self.callback != None and callable(self.callback.rockBlockSignalPass) ):
                     self.callback.rockBlockSignalPass()

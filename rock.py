@@ -31,9 +31,9 @@ class RockApp(rockBlockProtocol):
         margin_x = 1
         margin_y = 1
         self.width = maxx - 2*margin_x;
-        stat_height = 1
-        input_height = 3
-        msg_height = maxy - stat_height - input_height - 2*margin_y + 1
+        self.w_status_height = 1
+        self.w_input_height = 3
+        msg_height = maxy - self.w_status_height - self.w_input_height - 2*margin_y + 1
         begin_x = margin_x
         begin_y = margin_y
 
@@ -60,25 +60,27 @@ class RockApp(rockBlockProtocol):
         begin_y += msg_height
 
         # bottom enclosing window so we can draw a box
-        win2 = curses.newwin(input_height, self.width, begin_y, begin_x)
+        win2 = curses.newwin(self.w_input_height, self.width, begin_y, begin_x)
         win2.box()
         helptxt = "[q] quit | [s] send message | [r] receive message"
         win2.addstr(0, self.center(helptxt), helptxt, self.yellow)
-        win2.addstr(input_height-1, self.center(args.device), args.device, self.cyan)
         win2.refresh()
 
-        # initialize rockBlock interface
-        rb = rockBlock.rockBlock(args.device, self)
-
         # input sits inside winbot
-        win_input = curses.newwin(input_height-2, self.width-2, begin_y+1, begin_x+1)
+        win_input = curses.newwin(self.w_input_height-2, self.width-2, begin_y+1, begin_x+1)
         win_input.refresh()
 
-        begin_y += input_height
+        begin_y += self.w_input_height
 
         # status window sits below winbot, no border
-        self.w_status = curses.newwin(stat_height, self.width, begin_y, begin_x)
+        self.w_status = curses.newwin(self.w_status_height, self.width, begin_y, begin_x)
         self.w_status.refresh()
+
+        # initialize rockBlock interface
+        try:
+            rb = rockBlock.rockBlock(args.device, self)          
+        except rockBlock.rockBlockException as e:
+            pass
 
         while (True):
             curses.curs_set(0)
@@ -113,6 +115,11 @@ class RockApp(rockBlockProtocol):
         return right
 
 
+    def display_device(self, device, status):
+        color = self.cyan
+        win2.addstr(self.w_input_height-1, self.center(device), device, color)
+
+
     def center(self, string):
         strlen = len(string)
         if (strlen < self.width):
@@ -144,14 +151,18 @@ class RockApp(rockBlockProtocol):
         self.w_status.clrtoeol()
         self.w_status.refresh()
 
+
     def rockBlockSignalFail(self):
         return
+
 
     def rockBlockSignalPass(self):
         return
 
+
     def rockBlockSignalUpdate(self, signal):
         return
+
 
     def rockBlockConnected(self):
         self.w_status.erase()
