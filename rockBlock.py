@@ -44,10 +44,10 @@ class rockBlockException(Exception):
 
 class rockBlock(object):
 
-    IRIDIUM_EPOCH = 1399818235000   #May 11, 2014, at 14:23:55 (This will be 're-epoched' every couple of years!)
+    IRIDIUM_EPOCH = 1399818235000   
+    #May 11, 2014, at 14:23:55 (This will be 're-epoched' every couple of years!)
 
     def __init__(self, portId, callback):
-
         self.s = None
         self.portId = portId
         self.callback = callback
@@ -63,9 +63,9 @@ class rockBlock(object):
                         self.callback.rockBlockConnected()
                         return
             self.close()
-            raise rockBlockException()
+            raise rockBlockException("unable to connect to rockBlock")
         except (Exception):
-            raise rockBlockException
+            raise rockBlockException(Exception)
 
 
     #Ensure that the connection is still alive
@@ -224,8 +224,7 @@ class rockBlock(object):
     def _queueMessage(self, msg):
         self._ensureConnectionStatus()
         if( len(msg) > 340):
-            print "sendMessageWithBytes bytes should be <= 340 bytes"
-            return False
+            raise rockBlockException("message must be 340 bytes or less")
 
         command = "AT+SBDWB=" + str( len(msg) )
         self.s.write(command + "\r")
@@ -365,7 +364,7 @@ class rockBlock(object):
         while True:
             signal = self.requestSignalStrength()
             if(SIGNAL_ATTEMPTS == 0 or signal < 0):
-                print  "NO SIGNAL"
+                #print  "NO SIGNAL"
                 if(self.callback != None and callable(self.callback.rockBlockSignalFail) ):
                     self.callback.rockBlockSignalFail()
                 return False
@@ -383,7 +382,7 @@ class rockBlock(object):
         self.s.write("AT+SBDRB\r")
         response = self.s.readline().strip().replace("AT+SBDRB\r","").strip()
         if( response == "OK" ):
-            print "No message content.. strange!"
+            raise rockBlockException("Unexpectd modem response: no message content")
             if(self.callback != None and callable(self.callback.rockBlockRxReceived) ):
                 self.callback.rockBlockRxReceived(mtMsn, "")
         else:

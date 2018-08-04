@@ -53,9 +53,9 @@ class RockApp(rockBlockProtocol):
         win1.refresh()
 
         # msg window sits inside win1
-        self.msg = curses.newwin(msg_height-2, self.width-2, begin_y+1, begin_x+1)
-        self.msg.scrollok(True)
-        self.msg.refresh()
+        self.w_message = curses.newwin(msg_height-2, self.width-2, begin_y+1, begin_x+1)
+        self.w_message.scrollok(True)
+        self.w_message.refresh()
 
         begin_y += msg_height
 
@@ -71,31 +71,31 @@ class RockApp(rockBlockProtocol):
         rb = rockBlock.rockBlock(args.device, self)
 
         # input sits inside winbot
-        input = curses.newwin(input_height-2, self.width-2, begin_y+1, begin_x+1)
-        input.refresh()
+        win_input = curses.newwin(input_height-2, self.width-2, begin_y+1, begin_x+1)
+        win_input.refresh()
 
         begin_y += input_height
 
         # status window sits below winbot, no border
-        self.wstat = curses.newwin(stat_height, self.width, begin_y, begin_x)
-        self.wstat.refresh()
+        self.w_status = curses.newwin(stat_height, self.width, begin_y, begin_x)
+        self.w_status.refresh()
 
         while (True):
             curses.curs_set(0)
-            c = input.getkey()
+            c = win_input.getkey()
             if c == "q":
                 break
             elif c == "s":
-                input.addstr(0, 0, "Message> ")
+                win_input.addstr(0, 0, "Message> ")
                 curses.curs_set(1)
                 curses.echo()
-                input.refresh()
-                self.s = input.getstr() # read message string
+                win_input.refresh()
+                self.s = win_input.getstr() # read message string
                 curses.curs_set(0)
                 curses.noecho()
-                input.erase()
-                input.refresh()
-                input.move(0,1)
+                win_input.erase()
+                win_input.refresh()
+                win_input.move(0,1)
                 rb.sendMessage(self.s)
             elif c == "r":
                 rb.messageCheck()
@@ -121,49 +121,64 @@ class RockApp(rockBlockProtocol):
         
         
     def rockBlockRxStarted(self):
-        self.wstat.erase()
-        self.wstat.addstr(0,1,"RX Started")
-        self.wstat.clrtoeol()
-        self.wstat.refresh()
+        self.w_status.erase()
+        self.w_status.addstr(0,1,"RX Started")
+        self.w_status.clrtoeol()
+        self.w_status.refresh()
 
 
     def rockBlockRxFailed(self):
-        self.wstat.erase()
-        self.wstat.addstr(0,1,"RX Failed", self.red)
-        self.wstat.clrtoeol()
-        self.wstat.refresh()
+        self.w_status.erase()
+        self.w_status.addstr(0,1,"RX Failed", self.red)
+        self.w_status.clrtoeol()
+        self.w_status.refresh()
 
 
     def rockBlockRxReceived(self, mtmsn, data):
-        self.msg.addstr("base> '{}' #{}\n".format(data, mtmsn), self.green)
-        self.msg.refresh()
+        self.w_message.addstr("base> '{}' #{}\n".format(data, mtmsn), self.green)
+        self.w_message.refresh()
 
 
     def rockBlockRxMessageQueue(self, count):
-        self.wstat.addstr(0,1,"Queue: " + str(count))
-        self.wstat.clrtoeol()
-        self.wstat.refresh()
+        self.w_status.addstr(0,1,"Queue: " + str(count))
+        self.w_status.clrtoeol()
+        self.w_status.refresh()
 
+    def rockBlockSignalFail(self):
+        return
+
+    def rockBlockSignalPass(self):
+        return
+
+    def rockBlockSignalUpdate(self, signal):
+        return
+
+    def rockBlockConnected(self):
+        self.w_status.erase()
+        self.w_status.addstr(0,1,"Connected")
+        self.w_status.clrtoeol()
+        self.w_status.refresh()
+        return
 
     def rockBlockTxStarted(self):
-        self.wstat.erase()
-        self.wstat.addstr("TX Started")
-        self.wstat.refresh()
+        self.w_status.erase()
+        self.w_status.addstr("TX Started")
+        self.w_status.refresh()
 
 
     def rockBlockTxFailed(self):
-        self.wstat.erase()
-        self.wstat.addstr(0,1,"TX Failed", self.red)
-        self.wstat.refresh()
+        self.w_status.erase()
+        self.w_status.addstr(0,1,"TX Failed", self.red)
+        self.w_status.refresh()
 
 
     def rockBlockTxSuccess(self,momsn):
-        self.wstat.erase()
-        self.wstat.addstr(0,1,"TX Succeeded {}".format(str(momsn)), self.green)
-        self.wstat.clrtoeol()
-        self.wstat.refresh()
-        self.msg.addstr("me> '{}'\n".format(self.s))
-        self.msg.refresh()
+        self.w_status.erase()
+        self.w_status.addstr(0,1,"TX Succeeded {}".format(str(momsn)), self.green)
+        self.w_status.clrtoeol()
+        self.w_status.refresh()
+        self.w_message.addstr("me> '{}'\n".format(self.s))
+        self.w_message.refresh()
 
 
 if __name__ == '__main__':
