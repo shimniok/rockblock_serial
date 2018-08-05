@@ -156,7 +156,7 @@ class RockBlock(object):
 
         if( self._queueMessage(msg) and self._attemptConnection()  ):
             SESSION_DELAY = 1
-            SESSION_ATTEMPTS = 3
+            SESSION_ATTEMPTS = 2
             while(True):
                 SESSION_ATTEMPTS = SESSION_ATTEMPTS - 1
                 if(SESSION_ATTEMPTS == 0):
