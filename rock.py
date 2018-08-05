@@ -21,9 +21,11 @@ class RockApp(RockBlockProtocol):
         try:
             self.window_init()
             self.event_loop()
-        except (KeyboardInterrupt):
-            curses.endwin()
+        except (KeyboardInterrupt, SystemExit):
             pass
+        finally:
+            curses.endwin()
+            sys.exit(0)
 
     def window_init(self):
         self.scr = curses.initscr()
@@ -113,16 +115,14 @@ class RockApp(RockBlockProtocol):
                 rb.sendMessage(self.s)
             elif c == "r":
                 rb.messageCheck()
-        
-        curses.endwin()
-        #self.timer_stop()
-        sys.exit(0)
+                
 
     def print_status(self, status):
         self.w_status.erase()
         self.w_status.addstr(0,1, status, self.red)
         self.w_status.clrtoeol()
         self.w_status.refresh()
+
 
     def right(self, string):
         strlen = len(string)
