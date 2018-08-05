@@ -56,12 +56,8 @@ Press q to quit the program
 
 # Dependencies
 
-
-
 The code requires the following Python packages to be installed:
  * pyserial
- 
- 
  * curses
  * signal
  * sys
