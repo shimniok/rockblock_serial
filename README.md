@@ -24,18 +24,49 @@ ready for release.
 
 Run the python script rock.py
 
-Press m to begin typing a message, press return to send it
+Press s to send a message; type in the message and press return to send it
 Press r to attempt receiving messages sent to your RockBLOCK
 Press q to quit the program
 
+```
+ ┌────────────────────────────────────────────────────────────────────────────┐
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ │                                                                            │
+ └────────────────────────────────────────────────────────────────────────────┘
+ ┌──────────────[q] quit | [s] send message | [r] receive message─────────────┐
+ │                                                                            │
+ └────────────────────────────────/dev/ttyUSB0────────────────────────────────┘
+```
+
+
 # Dependencies
 
+
+
 The code requires the following Python packages to be installed:
+ * pyserial
+ 
+ 
  * curses
- * serial
  * signal
  * sys
  * threading
  * argparse
  * glob
  * time
+
