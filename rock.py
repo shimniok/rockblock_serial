@@ -17,7 +17,15 @@ class RockApp(RockBlockProtocol):
             default="/dev/ttyUSB0")
         args = parser.parse_args()
         self.device = args.device
+        
+        try:
+            self.window_init()
+            self.event_loop()
+        except (KeyboardInterrupt):
+            curses.endwin()
+            pass
 
+    def window_init(self):
         self.scr = curses.initscr()
         curses.start_color()
         curses.use_default_colors()
@@ -66,8 +74,8 @@ class RockApp(RockBlockProtocol):
         self.win2.refresh()
 
         # input sits inside winbot
-        win_input = curses.newwin(self.w_input_height-2, self.width-2, begin_y+1, begin_x+1)
-        win_input.refresh()
+        self.w_input = curses.newwin(self.w_input_height-2, self.width-2, begin_y+1, begin_x+1)
+        self.w_input.refresh()
 
         begin_y += self.w_input_height
 
@@ -75,6 +83,8 @@ class RockApp(RockBlockProtocol):
         self.w_status = curses.newwin(self.w_status_height, self.width, begin_y, begin_x)
         self.w_status.refresh()
 
+
+    def event_loop(self):
         # initialize RockBlock interface
         try:
             rb = RockBlock(self.device, self)          
@@ -85,21 +95,21 @@ class RockApp(RockBlockProtocol):
 
         while (True):
             curses.curs_set(0)
-            c = win_input.getkey()
+            c = self.w_input.getkey()
             if c == "q":
                 rb.close()
                 break
             elif c == "s":
-                win_input.addstr(0, 0, "Message> ")
+                self.w_input.addstr(0, 0, "Message> ")
                 curses.curs_set(1)
                 curses.echo()
-                win_input.refresh()
-                self.s = win_input.getstr() # read message string
+                self.w_input.refresh()
+                self.s = self.w_input.getstr() # read message string
                 curses.curs_set(0)
                 curses.noecho()
-                win_input.erase()
-                win_input.refresh()
-                win_input.move(0,1)
+                self.w_input.erase()
+                self.w_input.refresh()
+                self.w_input.move(0,1)
                 rb.sendMessage(self.s)
             elif c == "r":
                 rb.messageCheck()
