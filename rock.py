@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 from rockblock import RockBlock, RockBlockProtocol, RockBlockException
 import signal
@@ -23,13 +23,13 @@ class RockApp(RockBlockProtocol):
             self.window_init()
             self.event_loop()
         except (KeyboardInterrupt, SystemExit):
-            pass
+           pass
         except Exception as e:
-            curses.endwin()
-            print("Exception: {}".format(str(e)))
+           curses.endwin()
+           print("Exception: {}".format(str(e)))
         finally:
-            curses.endwin()
-            sys.exit(0)
+           curses.endwin()
+           sys.exit(0)
 
     def window_init(self):
         self.scr = curses.initscr()
@@ -145,6 +145,7 @@ class RockApp(RockBlockProtocol):
             elif c == "r":
                 rb.messageCheck()
 
+
     def process_serial(self, text):
         y, x = self.w_raw.getyx()
         self.w_raw.addstr(y, x, text+"\n", self.cyan)
@@ -167,7 +168,7 @@ class RockApp(RockBlockProtocol):
     def center(self, string):
         strlen = len(string)
         if (strlen < self.width):
-            center = (self.width/2 - strlen/2)
+            center = int(self.width/2 - strlen/2)
         return center
 
     def rockBlockRxStarted(self):

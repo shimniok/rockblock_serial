@@ -28,20 +28,20 @@ class RockBlockProtocol(object):
     def rockBlockDisconnected(self):pass
 
     #SIGNAL
-    def rockBlockSignalUpdate(self,signal):pass
+    def rockBlockSignalUpdate(self, signal):pass
     def rockBlockSignalPass(self):pass
     def rockBlockSignalFail(self):pass
 
     #MT
     def rockBlockRxStarted(self):pass
     def rockBlockRxFailed(self):pass
-    def rockBlockRxReceived(self,mtmsn,data):pass
-    def rockBlockRxMessageQueue(self,count):pass
+    def rockBlockRxReceived(self, mtmsn, data):pass
+    def rockBlockRxMessageQueue(self, count):pass
 
     #MO
     def rockBlockTxStarted(self):pass
     def rockBlockTxFailed(self):pass
-    def rockBlockTxSuccess(self,momsn):pass
+    def rockBlockTxSuccess(self, momsn):pass
 
 
 class RockBlockException(Exception):
@@ -69,8 +69,7 @@ class RockBlock(object):
 
     IRIDIUM_EPOCH = 1399818235000   
     #May 11, 2014, at 14:23:55 (This will be 're-epoched' every couple of years!)
-
-
+    
     def __init__(self, portId, callback):
         self.s = None
         self.portId = portId
@@ -78,34 +77,35 @@ class RockBlock(object):
         self.autoSession = True     #When True, we'll automatically initiate additional sessions if more messages to download
         self.SIGNAL_THRESHOLD = 2
 
-        try:
-            self.s = serial.Serial(self.portId, 19200, timeout=5)
-            if not (self._enableEcho() and self._disableFlowControl and self._disableRingAlerts()):
-                self.close()
-                raise RockBlockPortException
-            self.check_connection()
+        # try:
+        self.s = serial.Serial(self.portId, 19200, timeout=5)
+        if not (self._enableEcho() and self._disableFlowControl and self._disableRingAlerts()):
+            self.close()
+            raise RockBlockPortException
+        self.check_connection()
       
-        except ValueError:
-            raise RockBlockSerialException("Bad parameters for Serial")
-        except serial.SerialException as e1:
-            raise RockBlockSerialException("Serial exception {}".format(str(e1)))
-        except Exception as e2:
-            raise RockBlockException("Other exception in serial init {}".format(str(e2)))
+        # except ValueError:
+        #     raise RockBlockSerialException("Bad parameters for Serial")
+        # except serial.SerialException as e1:
+        #     raise RockBlockSerialException("Serial exception {}".format(str(e1)))
+        # except Exception as e2:
+        #     raise RockBlockException("Other exception in serial init {}".format(str(e2)))
             
 
     def serial_readline(self):
         text = self.s.readline().strip()
-        self.callback.process_serial(text)
+        if self.callback != None and callable(self.callback.process_serial):
+            self.callback.process_serial(text.decode('utf-8'))
         return text
 
 
     #Ensure that the connection is still alive
     def ping(self):
         self._ensureConnectionStatus()
-        command = "AT"
-        self.s.write(command + "\r")
+        command = b"AT"
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:
-            if self.serial_readline() == "OK":
+            if self.serial_readline() == b'OK':
                 return True
             else:
                 raise RockBlockException("ping: OK not received")
@@ -128,11 +128,11 @@ class RockBlock(object):
 
     def requestSignalStrength(self):
         self._ensureConnectionStatus()
-        command = "AT+CSQ"
-        self.s.write(command + "\r")
+        command = b'AT+CSQ'
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:
             response = self.serial_readline()
-            if response.find("+CSQ") >= 0:
+            if response.find(b'+CSQ') >= 0:
                 self.serial_readline()    #OK
                 self.serial_readline()    #BLANK
                 if len(response) == 6:
@@ -153,8 +153,8 @@ class RockBlock(object):
 
     def networkTime(self):
         self._ensureConnectionStatus()
-        command = "AT-MSSTM"
-        self.s.write(command + "\r")
+        command = b'AT-MSSTM'
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:
             response = self.serial_readline()
             self.serial_readline()   #BLANK
@@ -187,8 +187,8 @@ class RockBlock(object):
     def getSerialIdentifier(self):
         self._ensureConnectionStatus()
 
-        command = "AT+GSN"
-        self.s.write(command + "\r")
+        command = b'AT+GSN'
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:
             response = self.serial_readline()
             self.serial_readline()   #BLANK
@@ -203,22 +203,22 @@ class RockBlock(object):
     def setup(self):
         self._ensureConnectionStatus()
         #Disable Flow Control
-        command = "AT&K0"
-        self.s.write(command + "\r")
-        if self.serial_readline() == command and self.serial_readline() == "OK":
+        command = b'AT&K0'
+        self.s.write(command + b'\r')
+        if self.serial_readline() == command and self.serial_readline() == b'OK':
             #Store Configuration into Profile0
-            command = "AT&W0"
-            self.s.write(command + "\r")
+            command = b'AT&W0'
+            self.s.write(command + b'\r')
 
-            if self.serial_readline() == command and self.serial_readline() == "OK":
+            if self.serial_readline() == command and self.serial_readline() == b'OK':
                 #Use Profile0 as default
-                command = "AT&Y0"
-                self.s.write(command + "\r")
-                if self.serial_readline() == command and self.serial_readline() == "OK":
+                command = b'AT&Y0'
+                self.s.write(command + b'\r')
+                if self.serial_readline() == command and self.serial_readline() == b'OK':
                     #Flush Memory
-                    command = "AT*F"
-                    self.s.write(command + "\r")
-                    if self.serial_readline() == command and self.serial_readline() == "OK":
+                    command = b'AT*F'
+                    self.s.write(command + b'\r')
+                    if self.serial_readline() == command and self.serial_readline() == b'OK':
                         #self.close()
                         return True
         return False
@@ -257,8 +257,8 @@ class RockBlock(object):
         if len(msg) > 340:
             raise RockBlockException("message must be 340 bytes or less")
 
-        command = "AT+SBDWB=" + str( len(msg) )
-        self.s.write(command + "\r")
+        command = b'AT+SBDWB=' + str(len(msg)).encode('utf-8')
+        self.s.write(command + b'\r')
 
         if self.serial_readline() == command:
             if self.serial_readline() == "READY":
@@ -280,31 +280,31 @@ class RockBlock(object):
 
     def _enableEcho(self):
         self._ensureConnectionStatus()
-        command = "ATE1"
-        self.s.write(command + "\r")
+        command = b'ATE1'
+        self.s.write(command + b'\r')
         response = self.serial_readline()
         if response == command or response == "":
-            if self.serial_readline() == "OK":
+            if self.serial_readline() == b'OK':
                 return True
         return False
 
 
     def _disableFlowControl(self):
         self._ensureConnectionStatus()
-        command = "AT&K0"
-        self.s.write(command + "\r")
+        command = b'AT&K0'
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:
-            if self.serial_readline() == "OK":
+            if self.serial_readline() == b'OK':
                 return True
         return False
 
 
     def _disableRingAlerts(self):
         self._ensureConnectionStatus()
-        command = "AT+SBDMTA=0"
-        self.s.write(command + "\r")
+        command = b'AT+SBDMTA=0'
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:
-            if self.serial_readline() == "OK":
+            if self.serial_readline() == b'OK':
                 return True
         return False
 
@@ -316,16 +316,16 @@ class RockBlock(object):
             if SESSION_ATTEMPTS == 0:
                 return False
             SESSION_ATTEMPTS = SESSION_ATTEMPTS - 1
-            command = "AT+SBDIX"
-            self.s.write(command + "\r")
+            command = b'AT+SBDIX'
+            self.s.write(command + b'\r')
             if self.serial_readline() == command:
                 response = self.serial_readline()
-                if response.find("+SBDIX:") >= 0:
+                if response.find(b'+SBDIX:') >= 0:
                     self.serial_readline()   #BLANK
                     self.serial_readline()   #OK
 
-                    response = response.replace("+SBDIX: ", "")    #+SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
-                    parts = response.split(",")
+                    response = response.replace(b'+SBDIX: ', b'')    #+SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
+                    parts = response.split(b',')
                     moStatus = int(parts[0])
                     moMsn = int(parts[1])
                     mtStatus = int(parts[2])
@@ -388,12 +388,13 @@ class RockBlock(object):
 
     def _processMtMessage(self, mtMsn):
         self._ensureConnectionStatus()
-        self.s.write("AT+SBDRB\r")
-        response = self.serial_readline().replace("AT+SBDRB\r","").strip()
-        if response == "OK":
+        command = b'AT+SDBRB'
+        self.s.write(command + b'\r')
+        response = self.serial_readline().replace(b'AT+SBDRB\r',b'').strip()
+        if response == b'OK':
             raise RockBlockException("Unexpectd modem response: no message content")
             if self.callback != None and callable(self.callback.rockBlockRxReceived):
-                self.callback.rockBlockRxReceived(mtMsn, "")
+                self.callback.rockBlockRxReceived(mtMsn, b'')
         else:
             content = response[2:-2]
             if self.callback != None and callable(self.callback.rockBlockRxReceived):
@@ -403,11 +404,11 @@ class RockBlock(object):
 
     def _isNetworkTimeValid(self):
         self._ensureConnectionStatus()
-        command = "AT-MSSTM"
-        self.s.write(command + "\r")
+        command = b'AT-MSSTM'
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:  #Echo
             response = self.serial_readline()
-            if response.startswith("-MSSTM"):    #-MSSTM: a5cb42ad / no network service
+            if response.startswith(b'-MSSTM'):    #-MSSTM: a5cb42ad / no network service
                 self.serial_readline()   #OK
                 self.serial_readline()   #BLANK
                 if len(response) == 16:
@@ -416,12 +417,12 @@ class RockBlock(object):
 
     def _clearMoBuffer(self):
         self._ensureConnectionStatus()
-        command = "AT+SBDD0"
-        self.s.write(command + "\r")
+        command = b'AT+SBDD0'
+        self.s.write(command + b'\r')
         if self.serial_readline() == command:
-            if self.serial_readline()  == "0":
+            if self.serial_readline()  == b'0':
                 self.serial_readline()  #BLANK
-                if self.serial_readline() == "OK":
+                if self.serial_readline() == b'OK':
                     return True
 
         return False
