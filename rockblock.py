@@ -261,7 +261,7 @@ class RockBlock(object):
         self.s.write(command + b'\r')
 
         if self.serial_readline() == command:
-            if self.serial_readline() == "READY":
+            if self.serial_readline() == b'READY':
                 checksum = 0
                 for c in msg:
                     checksum = checksum + ord(c)
@@ -270,7 +270,7 @@ class RockBlock(object):
                 self.s.write( chr( checksum & 0xFF ) )
                 self.serial_readline()   #BLANK
                 result = False
-                if self.serial_readline() == "0":
+                if self.serial_readline() == b'0':
                     result = True
                 self.serial_readline()   #BLANK
                 self.serial_readline()   #OK
