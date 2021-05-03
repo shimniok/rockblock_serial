@@ -31,6 +31,7 @@ class RockApp(RockBlockProtocol):
            curses.endwin()
            sys.exit(0)
 
+
     def window_init(self):
         self.scr = curses.initscr()
         curses.start_color()
@@ -114,6 +115,7 @@ class RockApp(RockBlockProtocol):
         self.w_raw.scrollok(True)
         self.w_raw.refresh()
 
+
     def event_loop(self):
         # initialize RockBlock interface
         try:
@@ -153,11 +155,13 @@ class RockApp(RockBlockProtocol):
         self.w_raw.refresh()
         return
 
+
     def print_status(self, status):
         self.w_status.erase()
         self.w_status.addstr(0, 1, status, self.red)
         self.w_status.clrtoeol()
         self.w_status.refresh()
+
 
     def right(self, string):
         strlen = len(string)
@@ -165,11 +169,13 @@ class RockApp(RockBlockProtocol):
             right = (self.width - strlen)
         return right
 
+
     def center(self, string):
         strlen = len(string)
         if (strlen < self.width):
             center = int(self.width/2 - strlen/2)
         return center
+
 
     def rockBlockRxStarted(self):
         self.w_status.erase()
@@ -177,56 +183,78 @@ class RockApp(RockBlockProtocol):
         self.w_status.clrtoeol()
         self.w_status.refresh()
 
+
     def rockBlockRxFailed(self):
         self.w_status.erase()
         self.w_status.addstr(0, 1, "RX Failed", self.red)
         self.w_status.clrtoeol()
         self.w_status.refresh()
 
+
     def rockBlockRxReceived(self, mtmsn, data):
         self.w_message.addstr(
             "base> '{}' #{}\n".format(data, mtmsn), self.green)
         self.w_message.refresh()
+
 
     def rockBlockRxMessageQueue(self, count):
         self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))
         self.w_header.clrtoeol()
         self.w_header.refresh()
 
+
+    def generate_signal_str(self, signal):
+        bars = ['\u2581', '\u2582', '\u2583', '\u2584', '\u2585']
+        s = "Signal:["
+        for i in range(0, signal):
+            s += bars[i]
+        for i in range(signal, 5):
+            s += "_"
+        s += "]"
+        return s
+
+
     def rockBlockSignalFail(self):
-        self.signal = "Signal:X"
-        self.w_header.addstr(0, self.width - len(self.signal) - 2, self.signal, self.red)
+        s = self.generate_signal_str(0)
+        self.w_header.addstr(0, self.width - len(s) - 2, s, self.red)
         self.w_header.refresh()
         return
+
 
     def rockBlockSignalPass(self):
         return
 
+
     def rockBlockSignalUpdate(self, signal):
-        self.signal = "Signal:{}".format(signal)
-        self.w_header.addstr(0, self.width - len(self.signal) - 2, self.signal, self.cyan)
+        s = self.generate_signal_str(signal)
+        self.w_header.addstr(0, self.width - len(s) - 2, s, color)
         self.w_header.refresh()
         return
+
 
     def rockBlockConnected(self):
         self.w_header.addstr(0, self.center(self.device), self.device, self.cyan)
         self.w_header.refresh()
         return
 
+
     def rockBlockDisonnected(self):
         self.w_header.addstr(0, self.center(self.device), self.device, self.red)
         self.w_header.refresh()
         return
+
 
     def rockBlockTxStarted(self):
         self.w_status.erase()
         self.w_status.addstr("TX Started")
         self.w_status.refresh()
 
+
     def rockBlockTxFailed(self):
         self.w_status.erase()
         self.w_status.addstr(0, 1, "TX Failed", self.red)
         self.w_status.refresh()
+
 
     def rockBlockTxSuccess(self, momsn):
         self.w_status.erase()
