@@ -188,9 +188,9 @@ class RockApp(RockBlockProtocol):
         self.w_message.refresh()
 
     def rockBlockRxMessageQueue(self, count):
-        self.w_status.addstr(0, 1, "Queue: " + str(count))
-        self.w_status.clrtoeol()
-        self.w_status.refresh()
+        self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))
+        self.w_header.clrtoeol()
+        self.w_header.refresh()
 
     def rockBlockSignalFail(self):
         self.signal = "Signal:X"
