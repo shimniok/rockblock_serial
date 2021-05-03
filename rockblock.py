@@ -375,37 +375,27 @@ class RockBlock(object):
         RESCAN_DELAY = 10
         SIGNAL_THRESHOLD = 2
 
-        #Wait for valid Network Time
-        while True:
-            if(TIME_ATTEMPTS == 0):
-                if(self.callback != None and callable(self.callback.rockBlockSignalFail) ):
-                    self.callback.rockBlockSignalFail()
-                return False
+        #Check valid Network Time
+        if not self._isNetworkTimeValid():
+            if(self.callback != None and callable(self.callback.rockBlockSignalFail)):
+                self.callback.rockBlockSignalFail()
+            return False
 
-            if( self._isNetworkTimeValid() ):
-                break
+        #Check signal strength
+        signal = self.requestSignalStrength()
+        if SIGNAL_ATTEMPTS == 0 or signal < 0:
+            if(self.callback != None and callable(self.callback.rockBlockSignalFail) ):
+                self.callback.rockBlockSignalFail()
+            return False
 
-            TIME_ATTEMPTS = TIME_ATTEMPTS - 1;
-
-            time.sleep(TIME_DELAY)
-
-
-        #Wait for acceptable signal strength
-        while True:
-            signal = self.requestSignalStrength()
-            if(SIGNAL_ATTEMPTS == 0 or signal < 0):
-                #print  "NO SIGNAL"
-                if(self.callback != None and callable(self.callback.rockBlockSignalFail) ):
-                    self.callback.rockBlockSignalFail()
-                return False
-            self.callback.rockBlockSignalUpdate(signal)
-            if( signal >= SIGNAL_THRESHOLD ):
-                if(self.callback != None and callable(self.callback.rockBlockSignalPass) ):
-                    self.callback.rockBlockSignalPass()
-                return True;
-            SIGNAL_ATTEMPTS = SIGNAL_ATTEMPTS - 1
-            time.sleep(RESCAN_DELAY)
-
+        self.callback.rockBlockSignalUpdate(signal)
+        if signal >= SIGNAL_THRESHOLD:
+            if(self.callback != None and callable(self.callback.rockBlockSignalPass) ):
+                self.callback.rockBlockSignalPass()
+            return True
+        else:
+            self.callback.rockBlockSignalFail()
+            return False
 
     def _processMtMessage(self, mtMsn):
         self._ensureConnectionStatus()
