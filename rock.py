@@ -23,6 +23,9 @@ class RockApp(RockBlockProtocol):
             self.event_loop()
         except (KeyboardInterrupt, SystemExit):
             pass
+        except Exception as e:
+            curses.endwin()
+            print("Exception: {}".format(str(e)))
         finally:
             curses.endwin()
             sys.exit(0)
@@ -39,12 +42,13 @@ class RockApp(RockBlockProtocol):
         maxy, maxx = self.scr.getmaxyx()
         margin_x = 1
         margin_y = 1
-        self.width = maxx - 2*margin_x;
+        self.w_raw_height = 20
         self.w_status_height = 1
         self.w_input_height = 3
-        msg_height = maxy - self.w_status_height - self.w_input_height - 2*margin_y + 1
+        msg_height = maxy - self.w_status_height - self.w_input_height - self.w_raw_height - 2*margin_y + 1
         begin_x = margin_x
         begin_y = margin_y
+        self.width = maxx - 2*margin_x
 
         # initialize colors
         curses.init_pair(1, curses.COLOR_RED, -1)
@@ -55,11 +59,13 @@ class RockApp(RockBlockProtocol):
         self.cyan = curses.color_pair(3)
         curses.init_pair(4, curses.COLOR_YELLOW, -1)
         self.yellow = curses.color_pair(4)
+        curses.init_pair(5, curses.COLOR_WHITE, -1)
+        self.white = curses.color_pair(5)
 
         # top enclosing window so we can draw a box
-        win1 = curses.newwin(msg_height, self.width, begin_y, begin_x)
-        win1.box()
-        win1.refresh()
+        self.win1 = curses.newwin(msg_height, self.width, begin_y, begin_x)
+        self.win1.box()
+        self.win1.refresh()
 
         # msg window sits inside win1
         self.w_message = curses.newwin(msg_height-2, self.width-2, begin_y+1, begin_x+1)
@@ -84,6 +90,16 @@ class RockApp(RockBlockProtocol):
         # status window sits below winbot, no border
         self.w_status = curses.newwin(self.w_status_height, self.width, begin_y, begin_x)
         self.w_status.refresh()
+
+        begin_y += self.w_status_height
+
+        self.win3 = curses.newwin(self.w_raw_height, self.width, begin_y, begin_x)
+        self.win3.box()
+        self.win3.refresh()
+
+        self.w_raw = curses.newwin(self.w_raw_height-2, self.width-2, begin_y+1, begin_x+1)
+        self.w_raw.scrollok(True)
+        self.w_raw.refresh()
 
 
     def event_loop(self):
@@ -115,7 +131,15 @@ class RockApp(RockBlockProtocol):
                 rb.sendMessage(self.s)
             elif c == "r":
                 rb.messageCheck()
-                
+
+
+    def process_serial(self, text):
+        y, x = self.w_raw.getyx()
+        self.w_raw.addstr(y, x, text+"\n", self.cyan)
+        self.w_raw.clrtoeol()
+        self.w_raw.refresh()
+        return
+
 
     def print_status(self, status):
         self.w_status.erase()

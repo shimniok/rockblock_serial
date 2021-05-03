@@ -20,6 +20,10 @@ import serial
 
 class RockBlockProtocol(object):
 
+    #RAW OUTPUT
+    def process_serial(self, text):pass
+
+    #CONNECTION
     def rockBlockConnected(self):pass
     def rockBlockDisconnected(self):pass
 
@@ -81,18 +85,31 @@ class RockBlock(object):
       
         except ValueError:
             raise RockBlockSerialException("Bad parameters for Serial")
-        except serial.SerialException:
-            raise RockBlockSerialException
+        except serial.SerialException as e1:
+            raise RockBlockSerialException("Serial exception {}".format(str(e1)))
+        except Exception as e2:
+            raise RockBlockException("Other exception in serial init {}".format(str(e2)))
             
+
+    def serial_readline(self):
+        text = self.s.readline().strip()
+        self.callback.process_serial(text)
+        return text
+
 
     #Ensure that the connection is still alive
     def ping(self):
         self._ensureConnectionStatus()
         command = "AT"
         self.s.write(command + "\r")
-        if( self.s.readline().strip() == command ):
-            if( self.s.readline().strip() == "OK" ):
+        if( self.serial_readline() == command ):
+            if( self.serial_readline() == "OK" ):
                 return True
+            else:
+                raise RockBlockException("ping: OK not received")
+        else:
+            raise RockBlockException("ping: command echo not received")
+
         return False
 
 
@@ -111,11 +128,11 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         command = "AT+CSQ"
         self.s.write(command + "\r")
-        if( self.s.readline().strip() == command):
-            response = self.s.readline().strip()
+        if( self.serial_readline() == command):
+            response = self.serial_readline()
             if( response.find("+CSQ") >= 0 ):
-                self.s.readline().strip()    #OK
-                self.s.readline().strip()    #BLANK
+                self.serial_readline()    #OK
+                self.serial_readline()    #BLANK
                 if( len(response) == 6):
                     return int( response[5] )
         return -1
@@ -136,16 +153,16 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         command = "AT-MSSTM"
         self.s.write(command + "\r")
-        if(self.s.readline().strip() == command):
-            response = self.s.readline().strip()
-            self.s.readline().strip()   #BLANK
-            self.s.readline().strip()   #OK
+        if(self.serial_readline() == command):
+            response = self.serial_readline()
+            self.serial_readline()   #BLANK
+            self.serial_readline()   #OK
             if( not "no network service" in response ):
                 utc = int(response[8:], 16)
                 utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
                 return utc
             else:
-                return 0;
+                return 0
 
 
     def sendMessage(self, msg):
@@ -178,10 +195,10 @@ class RockBlock(object):
 
         command = "AT+GSN"
         self.s.write(command + "\r")
-        if(self.s.readline().strip() == command):
-            response = self.s.readline().strip()
-            self.s.readline().strip()   #BLANK
-            self.s.readline().strip()   #OK
+        if(self.serial_readline() == command):
+            response = self.serial_readline()
+            self.serial_readline()   #BLANK
+            self.serial_readline()   #OK
             return response
 
 
@@ -194,20 +211,20 @@ class RockBlock(object):
         #Disable Flow Control
         command = "AT&K0"
         self.s.write(command + "\r")
-        if(self.s.readline().strip() == command and self.s.readline().strip() == "OK"):
+        if(self.serial_readline() == command and self.serial_readline() == "OK"):
             #Store Configuration into Profile0
             command = "AT&W0"
             self.s.write(command + "\r")
 
-            if(self.s.readline().strip() == command and self.s.readline().strip() == "OK"):
+            if(self.serial_readline() == command and self.serial_readline() == "OK"):
                 #Use Profile0 as default
                 command = "AT&Y0"
                 self.s.write(command + "\r")
-                if(self.s.readline().strip() == command and self.s.readline().strip() == "OK"):
+                if(self.serial_readline() == command and self.serial_readline() == "OK"):
                     #Flush Memory
                     command = "AT*F"
                     self.s.write(command + "\r")
-                    if(self.s.readline().strip() == command and self.s.readline().strip() == "OK"):
+                    if(self.serial_readline() == command and self.serial_readline() == "OK"):
                         #self.close()
                         return True
         return False
@@ -235,6 +252,7 @@ class RockBlock(object):
                 s.close()
                 result.append(port)
             except (OSError, serial.SerialException):
+                raise RockBlockException("listPorts: {}".format(str(e)))
                 pass
         return result
 
@@ -248,20 +266,20 @@ class RockBlock(object):
         command = "AT+SBDWB=" + str( len(msg) )
         self.s.write(command + "\r")
 
-        if(self.s.readline().strip() == command):
-            if(self.s.readline().strip() == "READY"):
+        if(self.serial_readline() == command):
+            if(self.serial_readline() == "READY"):
                 checksum = 0
                 for c in msg:
                     checksum = checksum + ord(c)
                 self.s.write( str(msg) )
                 self.s.write( chr( checksum >> 8 ) )
                 self.s.write( chr( checksum & 0xFF ) )
-                self.s.readline().strip()   #BLANK
+                self.serial_readline()   #BLANK
                 result = False
-                if(self.s.readline().strip() == "0"):
+                if(self.serial_readline() == "0"):
                     result = True
-                self.s.readline().strip()   #BLANK
-                self.s.readline().strip()   #OK
+                self.serial_readline()   #BLANK
+                self.serial_readline()   #OK
                 return result
         return False
 
@@ -270,9 +288,9 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         command = "ATE1"
         self.s.write(command + "\r")
-        response = self.s.readline().strip()
+        response = self.serial_readline()
         if(response == command or response == ""):
-            if( self.s.readline().strip() == "OK" ):
+            if( self.serial_readline() == "OK" ):
                 return True
         return False
 
@@ -281,8 +299,8 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         command = "AT&K0"
         self.s.write(command + "\r")
-        if(self.s.readline().strip() == command):
-            if( self.s.readline().strip() == "OK" ):
+        if(self.serial_readline() == command):
+            if( self.serial_readline() == "OK" ):
                 return True
         return False
 
@@ -291,8 +309,8 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         command = "AT+SBDMTA=0"
         self.s.write(command + "\r")
-        if( self.s.readline().strip() == command ):
-            if( self.s.readline().strip() == "OK" ):
+        if( self.serial_readline() == command ):
+            if( self.serial_readline() == "OK" ):
                 return True
         return False
 
@@ -306,11 +324,11 @@ class RockBlock(object):
             SESSION_ATTEMPTS = SESSION_ATTEMPTS - 1
             command = "AT+SBDIX"
             self.s.write(command + "\r")
-            if( self.s.readline().strip() == command ):
-                response = self.s.readline().strip()
+            if( self.serial_readline() == command ):
+                response = self.serial_readline()
                 if( response.find("+SBDIX:") >= 0 ):
-                    self.s.readline()   #BLANK
-                    self.s.readline()   #OK
+                    self.serial_readline()   #BLANK
+                    self.serial_readline()   #OK
 
                     response = response.replace("+SBDIX: ", "")    #+SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
                     parts = response.split(",")
@@ -392,7 +410,7 @@ class RockBlock(object):
     def _processMtMessage(self, mtMsn):
         self._ensureConnectionStatus()
         self.s.write("AT+SBDRB\r")
-        response = self.s.readline().strip().replace("AT+SBDRB\r","").strip()
+        response = self.serial_readline().replace("AT+SBDRB\r","").strip()
         if( response == "OK" ):
             raise RockBlockException("Unexpectd modem response: no message content")
             if(self.callback != None and callable(self.callback.rockBlockRxReceived) ):
@@ -401,18 +419,18 @@ class RockBlock(object):
             content = response[2:-2]
             if(self.callback != None and callable(self.callback.rockBlockRxReceived) ):
                 self.callback.rockBlockRxReceived(mtMsn, content)
-            self.s.readline()   #BLANK?
+            self.serial_readline()   #BLANK?
 
 
     def _isNetworkTimeValid(self):
         self._ensureConnectionStatus()
         command = "AT-MSSTM"
         self.s.write(command + "\r")
-        if( self.s.readline().strip() == command ):  #Echo
-            response = self.s.readline().strip()
+        if( self.serial_readline() == command ):  #Echo
+            response = self.serial_readline()
             if( response.startswith("-MSSTM") ):    #-MSSTM: a5cb42ad / no network service
-                self.s.readline()   #OK
-                self.s.readline()   #BLANK
+                self.serial_readline()   #OK
+                self.serial_readline()   #BLANK
                 if( len(response) == 16):
                     return True
         return False
@@ -421,10 +439,10 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         command = "AT+SBDD0"
         self.s.write(command + "\r")
-        if(self.s.readline().strip() == command):
-            if(self.s.readline().strip()  == "0"):
-                self.s.readline()  #BLANK
-                if(self.s.readline().strip() == "OK"):
+        if(self.serial_readline() == command):
+            if(self.serial_readline()  == "0"):
+                self.serial_readline()  #BLANK
+                if(self.serial_readline() == "OK"):
                     return True
 
         return False
