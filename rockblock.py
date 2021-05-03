@@ -168,23 +168,15 @@ class RockBlock(object):
     def sendMessage(self, msg):
         self._ensureConnectionStatus()
 
-        if(self.callback != None and callable(self.callback.rockBlockTxStarted) ):
+        if self.callback != None and callable(self.callback.rockBlockTxStarted):
             self.callback.rockBlockTxStarted()
 
-        if( self._queueMessage(msg) and self._attemptConnection()  ):
-            SESSION_DELAY = 1
-            SESSION_ATTEMPTS = 2
-            while(True):
-                SESSION_ATTEMPTS = SESSION_ATTEMPTS - 1
-                if(SESSION_ATTEMPTS == 0):
-                    break
+        if self._queueMessage(msg) and self._attemptConnection():
+            if self._attemptSession():
+                self.callback.rockBlockTxSuccess()
+                return True
 
-                if( self._attemptSession() ):
-                    return True
-                else:
-                    time.sleep(SESSION_DELAY)
-
-        if(self.callback != None and callable(self.callback.rockBlockTxFailed) ):
+        if self.callback != None and callable(self.callback.rockBlockTxFailed):
             self.callback.rockBlockTxFailed()
 
         return False
