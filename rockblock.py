@@ -70,11 +70,13 @@ class RockBlock(object):
     IRIDIUM_EPOCH = 1399818235000   
     #May 11, 2014, at 14:23:55 (This will be 're-epoched' every couple of years!)
 
+
     def __init__(self, portId, callback):
         self.s = None
         self.portId = portId
         self.callback = callback
         self.autoSession = True     #When True, we'll automatically initiate additional sessions if more messages to download
+        self.SIGNAL_THRESHOLD = 2
 
         try:
             self.s = serial.Serial(self.portId, 19200, timeout=5)
@@ -142,7 +144,7 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         if(self.callback != None and callable(self.callback.rockBlockRxStarted) ):
             self.callback.rockBlockRxStarted()
-        if( self._attemptConnection() and self._attemptSession() ):
+        if( self.connectionOk() and self._attemptSession() ):
             return True
         else:
             if(self.callback != None and callable(self.callback.rockBlockRxFailed) ):
@@ -171,7 +173,7 @@ class RockBlock(object):
         if self.callback != None and callable(self.callback.rockBlockTxStarted):
             self.callback.rockBlockTxStarted()
 
-        if self._queueMessage(msg) and self._attemptConnection():
+        if self._queueMessage(msg) and self.connectionOk():
             if self._attemptSession():
                 self.callback.rockBlockTxSuccess()
                 return True
@@ -357,15 +359,9 @@ class RockBlock(object):
 
         return False
 
-    def _attemptConnection(self):
+    def connectionOk(self):
         self._ensureConnectionStatus()
 
-        TIME_ATTEMPTS = 20
-        TIME_DELAY = 1
-
-        SIGNAL_ATTEMPTS = 10
-        RESCAN_DELAY = 10
-        SIGNAL_THRESHOLD = 2
 
         #Check valid Network Time
         if not self._isNetworkTimeValid():
@@ -375,13 +371,13 @@ class RockBlock(object):
 
         #Check signal strength
         signal = self.requestSignalStrength()
-        if SIGNAL_ATTEMPTS == 0 or signal < 0:
-            if(self.callback != None and callable(self.callback.rockBlockSignalFail) ):
-                self.callback.rockBlockSignalFail()
-            return False
+        if(self.callback != None and callable(self.callback.rockBlockSignalFail) ):
+            self.callback.rockBlockSignalFail()
+        return False
 
         self.callback.rockBlockSignalUpdate(signal)
-        if signal >= SIGNAL_THRESHOLD:
+        
+        if signal >= self.SIGNAL_THRESHOLD:
             if(self.callback != None and callable(self.callback.rockBlockSignalPass) ):
                 self.callback.rockBlockSignalPass()
             return True

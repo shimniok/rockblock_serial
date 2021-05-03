@@ -118,6 +118,7 @@ class RockApp(RockBlockProtocol):
         # initialize RockBlock interface
         try:
             rb = RockBlock(self.device, self)
+            rb.connectionOk()
         except RockBlockException as err:
             curses.endwin()
             print("Error: {}: {}\n".format(self.device, err))
@@ -126,7 +127,6 @@ class RockApp(RockBlockProtocol):
         while (True):
             curses.curs_set(0)
             c = self.w_input.getkey()
-            print(c)
             if c == "q":
                 rb.close()
                 break
