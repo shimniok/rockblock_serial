@@ -19,7 +19,7 @@ class RockApp(RockBlockProtocol):
         self.scr = stdscr
         parser = argparse.ArgumentParser()
         parser.add_argument("-d", "--device",
-                            help="specify serial device to communicate with RockBLOCK",
+                            help="specify serial device/port connected to RockBLOCK",
                             default="/dev/ttyUSB0")
         args = parser.parse_args()
         self.device = args.device
