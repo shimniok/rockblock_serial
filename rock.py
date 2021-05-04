@@ -33,11 +33,8 @@ class RockApp(RockBlockProtocol):
     ##
 
     def window_init(self):
-        #self.scr = curses.initscr()
         curses.start_color()
         curses.use_default_colors()
-#        curses.noecho()
-#       curses.cbreak()
         self.scr.border(0)
 
         # initialize colors
@@ -82,15 +79,15 @@ class RockApp(RockBlockProtocol):
         row3_y = row2_y + row2_height    # input window
         row4_y = row3_y + row3_height    # status / raw windows
 
-        print("max_height={} full_height={}\r\n".format(max_height, full_height))
-        print("row1: y={} h={}\r\n".format(row1_y, row1_height))
-        print("row2: y={} h={}\r\n".format(row2_y, row2_height))
-        print("row3: y={} h={}\r\n".format(row3_y, row3_height))
-        print("row4: y={} h={}\r\n".format(row4_y, row4_height))
+        # print("max_height={} full_height={}\r\n".format(max_height, full_height))
+        # print("row1: y={} h={}\r\n".format(row1_y, row1_height))
+        # print("row2: y={} h={}\r\n".format(row2_y, row2_height))
+        # print("row3: y={} h={}\r\n".format(row3_y, row3_height))
+        # print("row4: y={} h={}\r\n".format(row4_y, row4_height))
 
-        print("max_width={} full_width={}\r\n".format(max_width, self.full_width))
-        print("col1: x={} w={}\r\n".format(col1_x, col1_width))
-        print("col2: x={} w={}\r\n".format(col2_x, col2_width))
+        # print("max_width={} full_width={}\r\n".format(max_width, self.full_width))
+        # print("col1: x={} w={}\r\n".format(col1_x, col1_width))
+        # print("col2: x={} w={}\r\n".format(col2_x, col2_width))
 
         # header window
         self.w_header = curses.newwin(row1_height, self.full_width, row1_y, col1_x)
