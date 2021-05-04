@@ -25,8 +25,8 @@ class RockApp(RockBlockProtocol):
         self.device = args.device
         self.signal = ""
 
-            self.window_init()
-            self.event_loop()
+        self.window_init()
+        self.event_loop()
 
     ##
     # INITIALIZE WINDOWS
@@ -149,7 +149,7 @@ class RockApp(RockBlockProtocol):
             curses.endwin()
             print("Error: {}: {}\n".format(self.device, e))
             sys.exit(1)
-
+        
         while (True):
             curses.curs_set(0)
             c = self.w_input.getkey()
