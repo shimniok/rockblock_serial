@@ -15,6 +15,8 @@ class RockApp(RockBlockProtocol):
     ##
     # MAIN
     ##
+    def main(self, stdscr, *args, **kwargs):
+        self.scr = stdscr
         parser = argparse.ArgumentParser()
         parser.add_argument("-d", "--device",
                             help="specify serial device to communicate with RockBLOCK",
@@ -288,4 +290,4 @@ class RockApp(RockBlockProtocol):
 # MAIN
 ##
 if __name__ == '__main__':
-    wrapper(RockApp().main())
+    curses.wrapper(RockApp().main)
