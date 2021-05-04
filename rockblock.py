@@ -264,10 +264,10 @@ class RockBlock(object):
             if self.serial_readline() == b'READY':
                 checksum = 0
                 for c in msg:
-                    checksum = checksum + ord(c)
-                self.s.write( str(msg) )
-                self.s.write( chr( checksum >> 8 ) )
-                self.s.write( chr( checksum & 0xFF ) )
+                    checksum += c
+                self.s.write( msg )
+                self.s.write( checksum >> 8 )
+                self.s.write( checksum & 0xFF )
                 self.serial_readline()   #BLANK
                 result = False
                 if self.serial_readline() == b'0':
