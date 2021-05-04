@@ -6,6 +6,7 @@ import sys
 import threading
 import curses
 import argparse
+from curses import wrapper
 
 
 class RockApp(RockBlockProtocol):
@@ -24,9 +25,9 @@ class RockApp(RockBlockProtocol):
             self.event_loop()
         except (KeyboardInterrupt, SystemExit):
            pass
-        except Exception as e:
-           curses.endwin()
-           print("Exception: {}".format(str(e)))
+#        except Exception as e:
+#           curses.endwin()
+#           print("Exception: {}".format(str(e)))
         finally:
            curses.endwin()
            sys.exit(0)
@@ -267,4 +268,4 @@ class RockApp(RockBlockProtocol):
 
 
 if __name__ == '__main__':
-    RockApp().main()
+    wrapper(RockApp().main())
