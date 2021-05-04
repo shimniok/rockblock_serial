@@ -25,17 +25,8 @@ class RockApp(RockBlockProtocol):
         self.device = args.device
         self.signal = ""
 
-        try:
             self.window_init()
             self.event_loop()
-        except (KeyboardInterrupt, SystemExit):
-           pass
-#        except Exception as e:
-#           curses.endwin()
-#           print("Exception: {}".format(str(e)))
-        finally:
-           curses.endwin()
-           sys.exit(0)
 
     ##
     # INITIALIZE WINDOWS
