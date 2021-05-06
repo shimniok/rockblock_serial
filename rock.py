@@ -156,9 +156,10 @@ class RockApp(RockBlockProtocol):
         port = RockBlock.listPorts()
 
         title = "Select Serial Port"
-        height = len(port) + 5
-        width = 50
         margin = 3
+        vmargin = 2
+        height = len(port) + 2*vmargin + 2
+        width = 50
         maxl = width - 2*margin
         w = curses.newwin(height, width, 1, int(self.full_width/2)-int(width/2))
         w.clear()
@@ -166,9 +167,15 @@ class RockApp(RockBlockProtocol):
         w.addstr(0, self.center(title, width), title, self.yellow)
 
         curses.curs_set(0)
+
+        w.move(vmargin, margin)
+        w.addstr("Type the letter of the port to use:")
+        y, x = w.getyx()
+        y += 2
+        
         portlist = {}
         for i in range(len(port)):
-            w.move(i+1, margin)
+            w.move(i+y, margin)
             c1 = i+ord("A")
             c2 = i+ord("a")
             portlist[c1] = port[i]
@@ -179,9 +186,6 @@ class RockApp(RockBlockProtocol):
             if i >= 15:
                 break
             
-        y, x = w.getyx()
-        w.move(y+2, margin)
-        w.addstr("Type the letter of the port to use.")
         w.refresh()
 
         # input for port selection
