@@ -169,7 +169,7 @@ class RockApp(RockBlockProtocol):
         curses.curs_set(0)
 
         w.move(vmargin, margin)
-        w.addstr("Type the letter of the port to use:")
+        w.addstr("To select a port, type its letter (a-z):")
         y, x = w.getyx()
         y += 2
         
