@@ -8,7 +8,7 @@ import curses
 import argparse
 from curses import wrapper
 import math
-
+from appdirs import user_config_dir
 
 class RockApp(RockBlockProtocol):
 
@@ -16,17 +16,28 @@ class RockApp(RockBlockProtocol):
     # MAIN
     ##
     def main(self, stdscr, *args, **kwargs):
-        self.scr = stdscr
-        parser = argparse.ArgumentParser()
-        parser.add_argument("-d", "--device",
-                            help="specify serial device/port connected to RockBLOCK",
-                            default="/dev/ttyUSB0")
-        args = parser.parse_args()
-        self.device = args.device
+
+        #config_dir = user_config_dir("RockBlockSerial", "BotThoughts")
+        #config_file = config_dir + "/preferences.json"
+
+        # TODO: make preferences directory if doesn't exist
+
+        # TODO: load preferences file if exists
+
+        # TODO: save preferences as they are updated in application
+
+        # parser = argparse.ArgumentParser()
+        # parser.add_argument("-d", "--device",
+        #                     help="specify serial device/port connected to RockBLOCK",
+        #                     default="/dev/ttyUSB0")
+        # args = parser.parse_args()
+        self.device = None
         self.signal = ""
 
+        self.scr = stdscr
+
         self.window_init()
-        self.event_loop()
+        self.event_loop()        
 
     ##
     # INITIALIZE WINDOWS
@@ -58,7 +69,7 @@ class RockApp(RockBlockProtocol):
         margin_y = 1
 
         self.full_width = max_width - 2 * margin_x
-        full_height = max_height - 2 * margin_y
+        full_height = max_height - 2 * margin_y - 1
 
         row1_height = 1    # header window
         row3_height = 3    # input window
@@ -90,55 +101,124 @@ class RockApp(RockBlockProtocol):
         # print("col2: x={} w={}\r\n".format(col2_x, col2_width))
 
         # header window
-        self.w_header = curses.newwin(row1_height, self.full_width, row1_y, col1_x)
-        self.w_header.refresh()
+        self.w_header = self.scr.subwin(row1_height, self.full_width, row1_y, col1_x)
+        #self.w_header.refresh()
 
         # message window, boxed
-        self.msg_box = curses.newwin(row2_height, self.full_width, row2_y, col1_x)
+        self.msg_box = self.scr.subwin(
+            row2_height, self.full_width, row2_y, col1_x)
         self.msg_box.box()
-        self.msg_box.refresh()
+        #self.msg_box.refresh()
 
-        self.w_message = curses.newwin(row2_height-2, self.full_width-2, row2_y+1, col1_x+1)
+        self.w_message = self.scr.subwin(row2_height-2, self.full_width-2, row2_y+1, col1_x+1)
         self.w_message.scrollok(True)
-        self.w_message.refresh()
+        #self.w_message.refresh()
 
         # input window, boxed
-        self.input_box = curses.newwin(row3_height, self.full_width, row3_y, col1_x)
+        self.input_box = self.scr.subwin(row3_height, self.full_width, row3_y, col1_x)
         self.input_box.box()
         helptxt = "[q] quit | [s] send msg | [r] receive msg"
         self.input_box.addstr(0, self.center(helptxt, self.full_width), helptxt, self.yellow)
-        self.input_box.refresh()
+        #self.input_box.refresh()
 
-        self.w_input = curses.newwin(
+        self.w_input = self.scr.subwin(
             row3_height-2, self.full_width-2, row3_y+1, col1_x+1)
-        self.w_input.refresh()
+        #self.w_input.refresh()
 
         # status on left, 50% width, boxed
-        self.box3 = curses.newwin(
+        self.box3 = self.scr.subwin(
             row4_height, col1_width, row4_y, col1_x)
         self.box3.box()
-        self.box3.refresh()
+        #self.box3.refresh()
 
-        self.w_status = curses.newwin(
+        self.w_status = self.scr.subwin(
             row4_height-2, col1_width-2, row4_y+1, col1_x+1)
-        self.w_status.refresh()
+        #self.w_status.refresh()
 
         # raw on right, 50% width, boxed
-        self.win3 = curses.newwin(
+        self.win3 = self.scr.subwin(
             row4_height, col2_width, row4_y, col2_x)
         self.win3.box()
-        self.win3.refresh()
+        #self.win3.refresh()
 
-        self.w_raw = curses.newwin(
+        self.w_raw = self.scr.subwin(
             row4_height-2, col2_width-2, row4_y+1, col2_x+1)
         self.w_raw.scrollok(True)
-        self.w_raw.refresh()
+        #self.w_raw.refresh()
+
+        self.scr.refresh()
+
+    ##
+    # UI Utilities
+    ##
+
+    def select_port(self):
+        port = RockBlock.listPorts()
+
+        title = "Select Serial Port"
+        height = len(port) + 5
+        width = 50
+        margin = 3
+        maxl = width - 2*margin
+        w = curses.newwin(height, width, 1, int(self.full_width/2)-int(width/2))
+        w.clear()
+        w.border()
+        w.addstr(0, self.center(title, width), title, self.yellow)
+
+        curses.curs_set(0)
+        portlist = {}
+        for i in range(len(port)):
+            w.move(i+1, margin)
+            c1 = i+ord("A")
+            c2 = i+ord("a")
+            portlist[c1] = port[i]
+            portlist[c2] = port[i]
+            s = "{:c}. {:{w}.{w}}".format(c2, port[i], w=maxl-3)
+            w.addstr(s, self.cyan)
+            i += 1
+            if i >= 15:
+                break
+            
+        y, x = w.getyx()
+        w.move(y+2, margin)
+        w.addstr("Type the letter of the port to use.")
+        w.refresh()
+
+        # input for port selection
+        while True:
+            c = self.w_input.getkey()
+            if (ord(c) in portlist.keys()):
+                self.device = portlist[ord(c)]
+                break
+        
+        w.clear()
+        w.refresh()
+        self.scr.touchwin()
+        self.scr.refresh()
+
+    def print_status(self, status, color):
+        self.w_status.addstr(status + "\n", color)
+        self.w_status.refresh()
+
+    def generate_signal_str(self, signal):
+        bars = ['\u2581', '\u2582', '\u2583', '\u2584', '\u2585']
+        s = "Signal:["
+        for i in range(0, signal):
+            s += bars[i]
+        for i in range(signal, 5):
+            s += "_"
+        s += "]"
+        return s
 
     ##
     # EVENT LOOP
     ##
+
     def event_loop(self):
         # initialize RockBlock interface
+        if self.device == None:
+            self.select_port()
+            
         try:
             rb = RockBlock(self.device, self)
             rb.connectionOk()
@@ -146,8 +226,8 @@ class RockApp(RockBlockProtocol):
             curses.endwin()
             print("Error: {}: {}\n".format(self.device, e))
             sys.exit(1)
-        
-        while (True):
+
+        while True:
             curses.curs_set(0)
             c = self.w_input.getkey()
             if c == "q":
@@ -168,23 +248,6 @@ class RockApp(RockBlockProtocol):
             elif c == "r":
                 rb.messageCheck()
 
-    ##
-    # UI Utilities
-    ##
-
-    def print_status(self, status, color):
-        self.w_status.addstr(status + "\n", color)
-        self.w_status.refresh()
-
-    def generate_signal_str(self, signal):
-        bars = ['\u2581', '\u2582', '\u2583', '\u2584', '\u2585']
-        s = "Signal:["
-        for i in range(0, signal):
-            s += bars[i]
-        for i in range(signal, 5):
-            s += "_"
-        s += "]"
-        return s
 
     ##
     # String alignment

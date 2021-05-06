@@ -245,8 +245,7 @@ class RockBlock(object):
                 s = serial.Serial(port)
                 s.close()
                 result.append(port)
-            except (OSError, serial.SerialException):
-                raise RockBlockException("listPorts: {}".format(str(e)))
+            except (OSError, serial.SerialException) as e:
                 pass
         return result
 
