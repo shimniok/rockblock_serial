@@ -392,18 +392,15 @@ class RockBlock(object):
 
     def _processMtMessage(self, mtMsn):
         self._ensureConnectionStatus()
-        command = b'AT+SDBRB'
-        self.s.write(command + b'\r')
-        response = self.serial_readline().replace(b'AT+SBDRB\r',b'').strip()
-        if response == b'OK':
-            raise RockBlockException("Unexpectd modem response: no message content")
-            if self.callback != None and callable(self.callback.rockBlockRxReceived):
-                self.callback.rockBlockRxReceived(mtMsn, b'')
+        self.send_command("AT+SBDRB")
+        response = self.serial_readline().decode('utf-8')
+        #response = self.serial_readline().replace(b'AT+SBDRB\r',b'').strip()
+        if response == "OK":
+            self.callback.rockBlockRxReceived(mtMsn, "")
         else:
             content = response[2:-2]
-            if self.callback != None and callable(self.callback.rockBlockRxReceived):
-                self.callback.rockBlockRxReceived(mtMsn, content)
-            self.serial_readline()   #BLANK?
+            self.callback.rockBlockRxReceived(mtMsn, content)
+            self.serial_readline()   #OK
 
 
     def _clearMoBuffer(self):

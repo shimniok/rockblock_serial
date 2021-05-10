@@ -35,6 +35,9 @@ class RockBlockTest(RockBlockProtocol):
         print("=== Network time valid")
         print(rb._isNetworkTimeValid())
 
+        print("=== Read MT Buffer")
+        rb._processMtMessage(999)
+
         # try:
         #     print("=== Attempt Session")
         #     rb._attemptSession()
@@ -93,6 +96,7 @@ class RockBlockTest(RockBlockProtocol):
         return
 
     def rockBlockRxReceived(self, mtmsn, data):
+        print("mtmsn:<{}> data: <{}>".format(mtmsn, data))
         return
 
     def rockBlockRxMessageQueue(self, count):
