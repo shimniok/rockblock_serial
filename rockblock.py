@@ -106,7 +106,8 @@ class RockBlock(object):
         response = self.serial_readline().decode('utf-8')
         if response.find(expected) >= 0:
             return response.replace(expected, "")
-        return ""
+        else:
+            return None
 
     #Ensure that the connection is still alive
     def ping(self):
@@ -300,12 +301,9 @@ class RockBlock(object):
 
     def _disableFlowControl(self):
         self._ensureConnectionStatus()
-        command = b'AT&K0'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:
-            if self.serial_readline() == b'OK':
-                return True
-        return False
+        self.send_command("AT&K0")
+        self.serial_readline()
+        return not self.expect("OK") == None
 
 
     def _disableRingAlerts(self):
