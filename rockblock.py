@@ -290,19 +290,12 @@ class RockBlock(object):
 
     def _enableEcho(self):
         self._ensureConnectionStatus()
-        command = b'ATE1'
-        self.s.write(command + b'\r')
-        response = self.serial_readline()
-        if response == command or response == "":
-            if self.serial_readline() == b'OK':
-                return True
-        return False
-
+        self.send_command("ATE1")
+        return not self.expect("OK") == None
 
     def _disableFlowControl(self):
         self._ensureConnectionStatus()
         self.send_command("AT&K0")
-        self.serial_readline()
         return not self.expect("OK") == None
 
 
