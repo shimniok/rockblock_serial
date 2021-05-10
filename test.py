@@ -55,6 +55,10 @@ class RockBlockTest(RockBlockProtocol):
             print("{char:d} {char:c}".format(char=c))
         return
 
+    def rockBlockNetworkTime(self, time, status):
+        print("time: {} status: {}".format(time, status))
+        return
+
     def rockBlockConnected(self):
         return
 

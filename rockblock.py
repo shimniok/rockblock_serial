@@ -27,6 +27,9 @@ class RockBlockProtocol(object):
     def rockBlockConnected(self):pass
     def rockBlockDisconnected(self):pass
 
+    #NETWORKTIME
+    def rockBlockNetworkTime(self, time, status):pass
+
     #SIGNAL
     def rockBlockSignalUpdate(self, signal):pass
     def rockBlockSignalPass(self):pass
@@ -171,8 +174,10 @@ class RockBlock(object):
         if not response == None and not "no network service" in response:
             utc = int(response, 16)
             utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
+            self.callback.rockBlockNetworkTime(utc, True)
             return utc
         else:
+            self.callback.rockBlockNetworkTime(0, False)
             return 0
 
 
