@@ -197,14 +197,11 @@ class RockBlock(object):
 
     def getSerialIdentifier(self):
         self._ensureConnectionStatus()
-
-        command = b'AT+GSN'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:
-            response = self.serial_readline()
-            self.serial_readline()   #BLANK
-            self.serial_readline()   #OK
-            return response
+        self.send_command("AT+GSN")
+        response = self.serial_readline().decode('utf-8')
+        self.serial_readline()   #BLANK
+        self.serial_readline()   #OK
+        return response
 
 
     #One-time initial setup function (Disables Flow Control)
@@ -297,7 +294,6 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         self.send_command("AT&K0")
         return not self.expect("OK") == None
-
 
     def _disableRingAlerts(self):
         self._ensureConnectionStatus()
