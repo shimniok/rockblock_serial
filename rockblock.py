@@ -222,25 +222,21 @@ class RockBlock(object):
     def setup(self):
         self._ensureConnectionStatus()
         #Disable Flow Control
-        command = b'AT&K0'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command and self.serial_readline() == b'OK':
-            #Store Configuration into Profile0
-            command = b'AT&W0'
-            self.s.write(command + b'\r')
+        self.send_command("AT&K0")
+        self.expect("OK")
+        
+        #Store Configuration into Profile0
+        self.send_command("AT&W0")
+        self.expect("OK")
 
-            if self.serial_readline() == command and self.serial_readline() == b'OK':
-                #Use Profile0 as default
-                command = b'AT&Y0'
-                self.s.write(command + b'\r')
-                if self.serial_readline() == command and self.serial_readline() == b'OK':
-                    #Flush Memory
-                    command = b'AT*F'
-                    self.s.write(command + b'\r')
-                    if self.serial_readline() == command and self.serial_readline() == b'OK':
-                        #self.close()
-                        return True
-        return False
+        #Use Profile0 as default
+        self.send_command("AT&Y0")
+        self.expect("OK")
+
+        #Flush Memory
+        self.send_command("AT*F")
+        self.expect("OK")
+        return True
 
 
     def close(self):
