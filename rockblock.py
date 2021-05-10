@@ -98,6 +98,15 @@ class RockBlock(object):
             self.callback.process_serial(text.decode('utf-8'))
         return text
 
+    def send_command(self, command):
+        self.s.write(command.encode('utf-8') + b'\r')
+        echo = self.serial_readline()
+
+    def expect(self, expected):
+        response = self.serial_readline().decode('utf-8')
+        if response.find(expected) >= 0:
+            return response.replace(expected, "")
+        return ""
 
     #Ensure that the connection is still alive
     def ping(self):
@@ -128,17 +137,18 @@ class RockBlock(object):
 
     def requestSignalStrength(self):
         self._ensureConnectionStatus()
-        command = b'AT+CSQ'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:
-            response = self.serial_readline()
-            if response.find(b'+CSQ') >= 0:
-                self.serial_readline()    #OK
-                self.serial_readline()    #BLANK
-                if len(response) == 6:
-                    return int( response[5] )
-        return -1
+        self.send_command("AT+CSQ")
+        self.serial_readline()
+        response = self.expect("+CSQ:")
+        self.serial_readline()
+        self.expect("OK")
 
+        try:
+            signal = int(response)
+        except:
+            signal = 0
+        
+        return signal
 
     def messageCheck(self):
         self._ensureConnectionStatus()
@@ -370,12 +380,13 @@ class RockBlock(object):
 
         #Check signal strength
         signal = self.requestSignalStrength()
+
+        self.callback.rockBlockSignalUpdate(signal)
+
         if self.callback != None and callable(self.callback.rockBlockSignalFail):
             self.callback.rockBlockSignalFail()
         return False
 
-        self.callback.rockBlockSignalUpdate(signal)
-        
         if signal >= self.SIGNAL_THRESHOLD:
             if self.callback != None and callable(self.callback.rockBlockSignalPass):
                 self.callback.rockBlockSignalPass()
