@@ -19,10 +19,12 @@ class RockBlockTest(RockBlockProtocol):
         
         print("=== Signal strength")
         signal = rb.requestSignalStrength()
-        print("Signal: {:d}".format(signal))
         
         print("=== Network time")
-        print("{}".format(rb.networkTime()))
+        rb.networkTime()
+        
+        print("=== IMEI")
+        rb.getSerialIdentifier()
 
         print("=== Network time valid")
         print(rb._isNetworkTimeValid())
@@ -50,14 +52,17 @@ class RockBlockTest(RockBlockProtocol):
         
 
     def process_serial(self, text):
-        print("<{}>".format(text))
+        print("    <{}>".format(text))
         for c in text.encode('utf-8'):
-            print("{char:d} {char:c}".format(char=c))
+            print("    {char:d} {char:c}".format(char=c))
         return
 
-    def rockBlockNetworkTime(self, time, status):
-        print("time: {} status: {}".format(time, status))
+    def rockBlockNetworkTime(self, event):
+        print("#### time: {} status: {}".format(event.value, event.status))
         return
+
+    def rockBlockImei(self, event):
+        print("#### imei: {} status: {}".format(event.value, event.status))
 
     def rockBlockConnected(self):
         return

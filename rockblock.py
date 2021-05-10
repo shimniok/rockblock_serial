@@ -18,6 +18,11 @@ import sys
 import time
 import serial
 
+class RockBlockEvent(object):
+    def __init__(self, value, status):
+        self.value = value
+        self.status = status
+
 class RockBlockProtocol(object):
 
     #RAW OUTPUT
@@ -27,8 +32,11 @@ class RockBlockProtocol(object):
     def rockBlockConnected(self):pass
     def rockBlockDisconnected(self):pass
 
-    #NETWORKTIME
-    def rockBlockNetworkTime(self, time, status):pass
+    #NETWORK TIME
+    def rockBlockNetworkTime(self, event):pass
+
+    #IMEI
+    def rockBlockImei(self, event):pass
 
     #SIGNAL
     def rockBlockSignalUpdate(self, signal):pass
@@ -174,11 +182,10 @@ class RockBlock(object):
         if not response == None and not "no network service" in response:
             utc = int(response, 16)
             utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
-            self.callback.rockBlockNetworkTime(utc, True)
-            return utc
         else:
-            self.callback.rockBlockNetworkTime(0, False)
-            return 0
+            utc = 0
+        self.callback.rockBlockNetworkTime(RockBlockEvent(utc, True))
+        return utc
 
 
     def sendMessage(self, msg):
@@ -204,6 +211,7 @@ class RockBlock(object):
         response = self.serial_readline().decode('utf-8')
         self.serial_readline()   #BLANK
         self.serial_readline()   #OK
+        self.callback.rockBlockImei(RockBlockEvent(response, response != None))
         return response
 
 
@@ -398,7 +406,7 @@ class RockBlock(object):
 
 
     def _isNetworkTimeValid(self):
-        return self.networkTime != 0
+        return self.networkTime() != 0
 
     def _clearMoBuffer(self):
         self._ensureConnectionStatus()
