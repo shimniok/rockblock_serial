@@ -237,6 +237,14 @@ class RockApp(RockBlockProtocol):
             if c == "q":
                 rb.close()
                 break
+            elif c == "c":
+                rb.requestSignalStrength()
+            elif c == "i":
+                imei = rb.getSerialIdentifier()
+                self.print_status(imei, self.cyan)
+            elif c == "t":
+                tm = rb.networkTime()
+                self.print_status(str(tm), self.cyan)
             elif c == "s":
                 self.w_input.addstr(0, 0, "Message> ")
                 curses.curs_set(1)
@@ -311,18 +319,21 @@ class RockApp(RockBlockProtocol):
     # SIGNAL
     ##
     def rockBlockSignalFail(self):
-        s = self.generate_signal_str(0)
-        self.w_header.addstr(0, self.right(s, self.full_width), s, self.red)
-        self.w_header.refresh()
+        #s = self.generate_signal_str(0)
+        #self.w_header.addstr(0, self.right(s, self.full_width), s, self.red)
+        #self.w_header.refresh()
+        self.print_status("Signal Fail", self.red)
         return
 
     def rockBlockSignalPass(self):
+        self.print_status("Signal Pass", self.green)
         return
 
     def rockBlockSignalUpdate(self, signal):
-        s = self.generate_signal_str(signal)
-        self.w_header.addstr(0, self.full_width - len(s) - 2, s, color)
-        self.w_header.refresh()
+        #s = self.generate_signal_str(signal)
+        self.print_status("Signal: {}".format(signal), self.white)
+        #self.w_header.addstr(0, self.full_width - len(s) - 2, s, color)
+        #self.w_header.refresh()
         return
 
     ##
