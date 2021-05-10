@@ -102,6 +102,33 @@ class RockBlock(object):
         # except Exception as e2:
         #     raise RockBlockException("Other exception in serial init {}".format(str(e2)))
             
+    ##
+    # Serial Specific
+    ##
+
+    def close(self):
+        if self.s != None:
+            self.s.close()
+            self.s = None
+
+    @staticmethod
+    def listPorts():
+        if sys.platform.startswith('win'):
+            ports = ['COM' + str(i + 1) for i in range(256)]
+        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
+            ports = glob.glob('/dev/tty[A-Za-z]*')
+        elif sys.platform.startswith('darwin'):
+            ports = glob.glob('/dev/tty.*')
+        result = []
+
+        for port in ports:
+            try:
+                s = serial.Serial(port)
+                s.close()
+                result.append(port)
+            except (OSError, serial.SerialException) as e:
+                pass
+        return result
 
     def serial_readline(self):
         text = self.s.readline().strip()
@@ -109,6 +136,10 @@ class RockBlock(object):
             self.callback.process_serial(text.decode('utf-8'))
         return text
 
+    ##
+    # Parsing
+    ##
+    
     def send_command(self, command):
         self.s.write(command.encode('utf-8') + b'\r')
         echo = self.serial_readline()
@@ -120,14 +151,9 @@ class RockBlock(object):
         else:
             return None
 
-    #Ensure that the connection is still alive
-    def ping(self):
-        self._ensureConnectionStatus()
-        self.send_command("AT")
-        response = self.expect("OK")
-        
-        return response != None
-
+    ##
+    # RB Protocol Methods
+    ##
 
     #Handy function to check if connection is still alive, callback based on result
     def check_connection(self):
@@ -139,22 +165,6 @@ class RockBlock(object):
             if self.callback != None and callable(self.callback.rockBlockDisconnected):
                 self.callback.rockBlockDisconnected()
 
-
-    def requestSignalStrength(self):
-        self._ensureConnectionStatus()
-        self.send_command("AT+CSQ")
-        self.serial_readline()
-        response = self.expect("+CSQ:")
-        self.serial_readline()
-        self.expect("OK")
-
-        try:
-            signal = int(response)
-        except:
-            signal = 0
-        
-        return signal
-
     def messageCheck(self):
         self._ensureConnectionStatus()
         if self.callback != None and callable(self.callback.rockBlockRxStarted):
@@ -164,22 +174,6 @@ class RockBlock(object):
         else:
             if self.callback != None and callable(self.callback.rockBlockRxFailed):
                 self.callback.rockBlockRxFailed()
-
-
-    def networkTime(self):
-        self._ensureConnectionStatus()
-        self.send_command("AT-MSSTM")
-        response = self.expect("-MSSTM: ")
-        self.serial_readline()   #BLANK
-        self.serial_readline()   #OK
-        if not response == None and not "no network service" in response:
-            utc = int(response, 16)
-            utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
-        else:
-            utc = 0
-        self.callback.rockBlockNetworkTime(RockBlockEvent(utc, True))
-        return utc
-
 
     def sendMessage(self, msg):
         self._ensureConnectionStatus()
@@ -197,6 +191,78 @@ class RockBlock(object):
 
         return False
 
+    def connectionOk(self):
+        self._ensureConnectionStatus()
+
+        #Check valid Network Time
+        if not self._isNetworkTimeValid():
+            if self.callback != None and callable(self.callback.rockBlockSignalFail):
+                self.callback.rockBlockSignalFail()
+            return False
+
+        #Check signal strength
+        signal = self.requestSignalStrength()
+
+        self.callback.rockBlockSignalUpdate(signal)
+
+        if self.callback != None and callable(self.callback.rockBlockSignalFail):
+            self.callback.rockBlockSignalFail()
+        return False
+
+        if signal >= self.SIGNAL_THRESHOLD:
+            if self.callback != None and callable(self.callback.rockBlockSignalPass):
+                self.callback.rockBlockSignalPass()
+            return True
+        else:
+            self.callback.rockBlockSignalFail()
+            return False
+
+    def _isNetworkTimeValid(self):
+        return self.networkTime() != 0
+
+    def _ensureConnectionStatus(self):
+        if self.s == None or self.s.isOpen() == False:
+            raise RockBlockException("failed connection status")
+
+    ##
+    # AT Command Primitives
+    ##
+
+    def ping(self):
+        self._ensureConnectionStatus()
+        self.send_command("AT")
+        response = self.expect("OK")
+        
+        return response != None
+
+    def requestSignalStrength(self):
+        self._ensureConnectionStatus()
+        self.send_command("AT+CSQ")
+        self.serial_readline()
+        response = self.expect("+CSQ:")
+        self.serial_readline()
+        self.expect("OK")
+
+        try:
+            signal = int(response)
+        except:
+            signal = 0
+        
+        return signal
+
+    def networkTime(self):
+        self._ensureConnectionStatus()
+        self.send_command("AT-MSSTM")
+        response = self.expect("-MSSTM: ")
+        self.serial_readline()   #BLANK
+        self.serial_readline()   #OK
+        if not response == None and not "no network service" in response:
+            utc = int(response, 16)
+            utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
+        else:
+            utc = 0
+        self.callback.rockBlockNetworkTime(RockBlockEvent(utc, True))
+        return utc
 
     def getSerialIdentifier(self):
         self._ensureConnectionStatus()
@@ -232,34 +298,6 @@ class RockBlock(object):
         self.expect("OK")
         return True
 
-
-    def close(self):
-        if self.s != None:
-            self.s.close()
-            self.s = None
-
-
-    @staticmethod
-    def listPorts():
-        if sys.platform.startswith('win'):
-            ports = ['COM' + str(i + 1) for i in range(256)]
-        elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-            ports = glob.glob('/dev/tty[A-Za-z]*')
-        elif sys.platform.startswith('darwin'):
-            ports = glob.glob('/dev/tty.*')
-        result = []
-
-        for port in ports:
-            try:
-                s = serial.Serial(port)
-                s.close()
-                result.append(port)
-            except (OSError, serial.SerialException) as e:
-                pass
-        return result
-
-
-    #Private Methods - Don't call these directly!
     def _queueMessage(self, msg):
         self._ensureConnectionStatus()
         if len(msg) > 340:
@@ -352,33 +390,6 @@ class RockBlock(object):
         return False
 
 
-    def connectionOk(self):
-        self._ensureConnectionStatus()
-
-        #Check valid Network Time
-        if not self._isNetworkTimeValid():
-            if self.callback != None and callable(self.callback.rockBlockSignalFail):
-                self.callback.rockBlockSignalFail()
-            return False
-
-        #Check signal strength
-        signal = self.requestSignalStrength()
-
-        self.callback.rockBlockSignalUpdate(signal)
-
-        if self.callback != None and callable(self.callback.rockBlockSignalFail):
-            self.callback.rockBlockSignalFail()
-        return False
-
-        if signal >= self.SIGNAL_THRESHOLD:
-            if self.callback != None and callable(self.callback.rockBlockSignalPass):
-                self.callback.rockBlockSignalPass()
-            return True
-        else:
-            self.callback.rockBlockSignalFail()
-            return False
-
-
     def _processMtMessage(self, mtMsn):
         self._ensureConnectionStatus()
         command = b'AT+SDBRB'
@@ -395,9 +406,6 @@ class RockBlock(object):
             self.serial_readline()   #BLANK?
 
 
-    def _isNetworkTimeValid(self):
-        return self.networkTime() != 0
-
     def _clearMoBuffer(self):
         self._ensureConnectionStatus()
         self.send_command("AT+SBDD0")
@@ -405,7 +413,3 @@ class RockBlock(object):
         self.serial_readline()  #BLANK
         self.serial_readline()  #OK
         return not r1 == None
-
-    def _ensureConnectionStatus(self):
-        if self.s == None or self.s.isOpen() == False:
-            raise RockBlockException("failed connection status")
