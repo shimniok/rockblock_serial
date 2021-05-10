@@ -393,17 +393,7 @@ class RockBlock(object):
 
 
     def _isNetworkTimeValid(self):
-        self._ensureConnectionStatus()
-        command = b'AT-MSSTM'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:  #Echo
-            response = self.serial_readline()
-            if response.startswith(b'-MSSTM'):    #-MSSTM: a5cb42ad / no network service
-                self.serial_readline()   #OK
-                self.serial_readline()   #BLANK
-                if len(response) == 16:
-                    return True
-        return False
+        return self.networkTime != 0
 
     def _clearMoBuffer(self):
         self._ensureConnectionStatus()

@@ -22,22 +22,25 @@ class RockBlockTest(RockBlockProtocol):
         print("Signal: {:d}".format(signal))
         
         print("=== Network time")
-        rb.networkTime()
+        print("{}".format(rb.networkTime()))
 
-        try:
-            print("=== Attempt Session")
-            rb._attemptSession()
-        except Exception as e:
-            print(str(e))
-            pass
+        print("=== Network time valid")
+        print(rb._isNetworkTimeValid())
 
-        #moStatus, moMsn, mtStatus, mtMsn, mtLength, mtQueued
-        print("moStatus: {}".format(rb.moStatus))
-        print("moMsn: {}".format(rb.moMsn))
-        print("mtStatus: {}".format(rb.mtStatus))
-        print("mtMsn: {}".format(rb.mtMsn))
-        print("mtLength: {}".format(rb.mtLength))
-        print("mtQueued: {}".format(rb.mtQueued))
+        # try:
+        #     print("=== Attempt Session")
+        #     rb._attemptSession()
+        # except Exception as e:
+        #     print(str(e))
+        #     pass
+
+        # #moStatus, moMsn, mtStatus, mtMsn, mtLength, mtQueued
+        # print("moStatus: {}".format(rb.moStatus))
+        # print("moMsn: {}".format(rb.moMsn))
+        # print("mtStatus: {}".format(rb.mtStatus))
+        # print("mtMsn: {}".format(rb.mtMsn))
+        # print("mtLength: {}".format(rb.mtLength))
+        # print("mtQueued: {}".format(rb.mtQueued))
 
         # print("=== Process MT Message")
         # rb._processMtMessage()
