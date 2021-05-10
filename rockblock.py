@@ -301,13 +301,8 @@ class RockBlock(object):
 
     def _disableRingAlerts(self):
         self._ensureConnectionStatus()
-        command = b'AT+SBDMTA=0'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:
-            if self.serial_readline() == b'OK':
-                return True
-        return False
-
+        self.send_command("AT+SBDMTA=0")
+        return not self.expect("OK") == None
 
     def _attemptSession(self):
         self._ensureConnectionStatus()
