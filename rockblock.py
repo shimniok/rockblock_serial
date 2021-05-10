@@ -123,17 +123,10 @@ class RockBlock(object):
     #Ensure that the connection is still alive
     def ping(self):
         self._ensureConnectionStatus()
-        command = b"AT"
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:
-            if self.serial_readline() == b'OK':
-                return True
-            else:
-                raise RockBlockException("ping: OK not received")
-        else:
-            raise RockBlockException("ping: command echo not received")
-
-        return False
+        self.send_command("AT")
+        response = self.expect("OK")
+        
+        return response != None
 
 
     #Handy function to check if connection is still alive, callback based on result

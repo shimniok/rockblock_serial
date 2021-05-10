@@ -14,6 +14,12 @@ class RockBlockTest(RockBlockProtocol):
         print("=== Initializing")
         rb = RockBlock("/dev/ttyUSB0", self)
         
+        # print("=== Setup")
+        # rb.setup()
+        
+        print("=== Ping")
+        rb.ping()
+        
         print("=== Disable ring alerts")
         rb._disableRingAlerts()
         
@@ -63,6 +69,7 @@ class RockBlockTest(RockBlockProtocol):
 
     def rockBlockImei(self, event):
         print("#### imei: {} status: {}".format(event.value, event.status))
+        return
 
     def rockBlockConnected(self):
         return
