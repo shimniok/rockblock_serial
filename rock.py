@@ -133,6 +133,7 @@ class RockApp(RockBlockProtocol):
 
         self.w_status = self.scr.subwin(
             row4_height-2, col1_width-2, row4_y+1, col1_x+1)
+        self.w_status.scrollok(True)
         #self.w_status.refresh()
 
         # raw on right, 50% width, boxed
