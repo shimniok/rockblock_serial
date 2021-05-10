@@ -407,15 +407,11 @@ class RockBlock(object):
 
     def _clearMoBuffer(self):
         self._ensureConnectionStatus()
-        command = b'AT+SBDD0'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:
-            if self.serial_readline()  == b'0':
-                self.serial_readline()  #BLANK
-                if self.serial_readline() == b'OK':
-                    return True
-
-        return False
+        self.send_command("AT+SBDD0")
+        r1 = self.expect("0")
+        self.serial_readline()  #BLANK
+        self.serial_readline()  #OK
+        return not r1 == None
 
     def _ensureConnectionStatus(self):
         if self.s == None or self.s.isOpen() == False:

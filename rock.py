@@ -12,10 +12,13 @@ from appdirs import user_config_dir
 
 class RockApp(RockBlockProtocol):
 
+    helptxt = "[q]uit [m]sg-send [r]eceive-msg [i]mei [s]ignal [b]uf-mo-clr"
+
     ##
     # MAIN
     ##
     def main(self, stdscr, *args, **kwargs):
+
 
         #config_dir = user_config_dir("RockBlockSerial", "BotThoughts")
         #config_file = config_dir + "/preferences.json"
@@ -33,9 +36,7 @@ class RockApp(RockBlockProtocol):
         # args = parser.parse_args()
         self.device = None
         self.signal = ""
-
         self.scr = stdscr
-
         self.window_init()
         self.event_loop()        
 
@@ -117,8 +118,7 @@ class RockApp(RockBlockProtocol):
         # input window, boxed
         self.input_box = self.scr.subwin(row3_height, self.full_width, row3_y, col1_x)
         self.input_box.box()
-        helptxt = "[q] quit | [s] send msg | [r] receive msg"
-        self.input_box.addstr(0, self.center(helptxt, self.full_width), helptxt, self.yellow)
+        self.input_box.addstr(0, self.center(self.helptxt, self.full_width), self.helptxt, self.yellow)
         #self.input_box.refresh()
 
         self.w_input = self.scr.subwin(
@@ -234,18 +234,23 @@ class RockApp(RockBlockProtocol):
         while True:
             curses.curs_set(0)
             c = self.w_input.getkey()
-            if c == "q":
+            if c == "q": # quit
                 rb.close()
                 break
-            elif c == "c":
+            elif c == "s": # get signal strength
                 rb.requestSignalStrength()
-            elif c == "i":
+            elif c == "i": # get IMEI
                 imei = rb.getSerialIdentifier()
                 self.print_status(imei, self.cyan)
-            elif c == "t":
+            elif c == "t": # network time
                 tm = rb.networkTime()
                 self.print_status(str(tm), self.cyan)
-            elif c == "s":
+            elif c == "b": # clear MO buffer
+                if rb._clearMoBuffer():
+                    self.print_status("MO buffer clear", self.white)
+                else:
+                    self.print_status("MO buffer clear fail", self.red)
+            elif c == "m": # send message
                 self.w_input.addstr(0, 0, "Message> ")
                 curses.curs_set(1)
                 curses.echo()
@@ -257,7 +262,7 @@ class RockApp(RockBlockProtocol):
                 self.w_input.refresh()
                 self.w_input.move(0, 1)
                 rb.sendMessage(self.s)
-            elif c == "r":
+            elif c == "r": # receive message
                 rb.messageCheck()
 
 
