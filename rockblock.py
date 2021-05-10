@@ -164,18 +164,16 @@ class RockBlock(object):
 
     def networkTime(self):
         self._ensureConnectionStatus()
-        command = b'AT-MSSTM'
-        self.s.write(command + b'\r')
-        if self.serial_readline() == command:
-            response = self.serial_readline()
-            self.serial_readline()   #BLANK
-            self.serial_readline()   #OK
-            if not "no network service" in response:
-                utc = int(response[8:], 16)
-                utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
-                return utc
-            else:
-                return 0
+        self.send_command("AT-MSSTM")
+        response = self.expect("-MSSTM: ")
+        self.serial_readline()   #BLANK
+        self.serial_readline()   #OK
+        if not response == None and not "no network service" in response:
+            utc = int(response, 16)
+            utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
+            return utc
+        else:
+            return 0
 
 
     def sendMessage(self, msg):
