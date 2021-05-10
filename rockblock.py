@@ -208,10 +208,11 @@ class RockBlock(object):
         return response
 
 
-    #One-time initial setup function (Disables Flow Control)
-    #This only needs to be called once, as is stored in non-volitile memory
-
-    #Make sure you DISCONNECT RockBLOCK from power for a few minutes after this command has been issued...
+    # One-time initial setup function (Disables Flow Control)
+    # This only needs to be called once, as is stored in non-volitile memory
+    #
+    # Make sure you DISCONNECT RockBLOCK from power for a few minutes after
+    # this command has been issued...
     def setup(self):
         self._ensureConnectionStatus()
         #Disable Flow Control
