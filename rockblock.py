@@ -132,8 +132,7 @@ class RockBlock(object):
 
     def serial_readline(self):
         text = self.s.readline().strip()
-        if self.callback != None and callable(self.callback.process_serial):
-            self.callback.process_serial(text.decode('utf-8'))
+        self.callback.process_serial(text.decode('utf-8'))
         return text
 
     ##
@@ -159,35 +158,31 @@ class RockBlock(object):
     def check_connection(self):
         self.s.timeout = 5
         if self.ping():
-            if self.callback != None and callable(self.callback.rockBlockConnected):
-                self.callback.rockBlockConnected()
+            self.callback.rockBlockConnected()
         else:
-            if self.callback != None and callable(self.callback.rockBlockDisconnected):
-                self.callback.rockBlockDisconnected()
+            self.callback.rockBlockDisconnected()
 
     def messageCheck(self):
         self._ensureConnectionStatus()
-        if self.callback != None and callable(self.callback.rockBlockRxStarted):
-            self.callback.rockBlockRxStarted()
+        
+        self.callback.rockBlockRxStarted()
+        
         if self.connectionOk() and self._attemptSession():
             return True
         else:
-            if self.callback != None and callable(self.callback.rockBlockRxFailed):
-                self.callback.rockBlockRxFailed()
+            self.callback.rockBlockRxFailed()
 
     def sendMessage(self, msg):
         self._ensureConnectionStatus()
 
-        if self.callback != None and callable(self.callback.rockBlockTxStarted):
-            self.callback.rockBlockTxStarted()
+        self.callback.rockBlockTxStarted()
 
         if self._queueMessage(msg) and self.connectionOk():
             if self._attemptSession():
                 self.callback.rockBlockTxSuccess()
                 return True
 
-        if self.callback != None and callable(self.callback.rockBlockTxFailed):
-            self.callback.rockBlockTxFailed()
+        self.callback.rockBlockTxFailed()
 
         return False
 
@@ -196,8 +191,7 @@ class RockBlock(object):
 
         #Check valid Network Time
         if not self._isNetworkTimeValid():
-            if self.callback != None and callable(self.callback.rockBlockSignalFail):
-                self.callback.rockBlockSignalFail()
+            self.callback.rockBlockSignalFail()
             return False
 
         #Check signal strength
@@ -205,13 +199,11 @@ class RockBlock(object):
 
         self.callback.rockBlockSignalUpdate(signal)
 
-        if self.callback != None and callable(self.callback.rockBlockSignalFail):
-            self.callback.rockBlockSignalFail()
+        self.callback.rockBlockSignalFail()
         return False
 
         if signal >= self.SIGNAL_THRESHOLD:
-            if self.callback != None and callable(self.callback.rockBlockSignalPass):
-                self.callback.rockBlockSignalPass()
+            self.callback.rockBlockSignalPass()
             return True
         else:
             self.callback.rockBlockSignalFail()
