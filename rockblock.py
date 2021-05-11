@@ -341,51 +341,41 @@ class RockBlock(object):
 
     def _attemptSession(self):
         self._ensureConnectionStatus()
-        SESSION_ATTEMPTS = 1
-        while(True):
-            if SESSION_ATTEMPTS == 0:
-                return False
-            SESSION_ATTEMPTS = SESSION_ATTEMPTS - 1
-            command = b'AT+SBDIX'
-            self.s.write(command + b'\r')
-            if self.serial_readline() == command:
-                response = self.serial_readline()
-                if response.find(b'+SBDIX:') >= 0:
-                    self.serial_readline()   #BLANK
-                    self.serial_readline()   #OK
+        self.send_command("AT+SBDIX")
+        # +SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
+        response = self.expect("+SBDIX: ")
+        self.serial_readline()   #BLANK
+        self.serial_readline()   #OK
 
-                    response = response.replace(b'+SBDIX: ', b'')    #+SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
-                    parts = response.split(b',')
-                    moStatus = int(parts[0])
-                    moMsn = int(parts[1])
-                    mtStatus = int(parts[2])
-                    mtMsn = int(parts[3])
-                    mtLength = int(parts[4])
-                    mtQueued = int(parts[5])
+        if response != None:
+            parts = response.split(",")
+            moStatus = int(parts[0])
+            moMsn = int(parts[1])
+            mtStatus = int(parts[2])
+            mtMsn = int(parts[3])
+            mtLength = int(parts[4])
+            mtQueued = int(parts[5])
 
-                    #Mobile Originated
-                    if moStatus <= 4:
-                        self._clearMoBuffer()
-                        if self.callback != None and callable(self.callback.rockBlockTxSuccess):
-                            self.callback.rockBlockTxSuccess( moMsn )
-                        pass
-                    else:
-                        if self.callback != None and callable(self.callback.rockBlockTxFailed):
-                            self.callback.rockBlockTxFailed()
+            #Mobile Originated
+            if moStatus <= 4:
+                self._clearMoBuffer()
+                self.callback.rockBlockTxSuccess( moMsn )
+                pass
+            else:
+                self.callback.rockBlockTxFailed()
 
-                    if mtStatus == 1 and mtLength > 0: #SBD message successfully received from the GSS.
-                        self._processMtMessage(mtMsn)
+            if mtStatus == 1 and mtLength > 0: 
+                # SBD message successfully received from the GSS.
+                self._processMtMessage(mtMsn)
 
-                    #AUTOGET NEXT MESSAGE
-                    if self.callback != None and callable(self.callback.rockBlockRxMessageQueue):
-                        self.callback.rockBlockRxMessageQueue(mtQueued)
+            self.callback.rockBlockRxMessageQueue(mtQueued)
 
-                    #There are additional MT messages to queued to download
-                    if mtQueued > 0 and self.autoSession == True:
-                        self._attemptSession() # TODO: get rid of recursion
+            #There are additional MT messages to queued to download
+            if mtQueued > 0 and self.autoSession == True:
+                self._attemptSession() # TODO: get rid of recursion
 
-                    if moStatus <= 4:
-                        return True
+            if moStatus <= 4:
+                return True
 
         return False
 
