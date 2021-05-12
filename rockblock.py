@@ -368,15 +368,29 @@ class RockBlock(object):
     def _processMtMessage(self, mtMsn):
         self._ensureConnectionStatus()
         self.send_command("AT+SBDRB")
-        response = self.serial_readline().decode('utf-8')
-        # TODO: split on \r read 2-byte length, message, 2-byte checksum
-        #response = self.serial_readline().replace(b'AT+SBDRB\r',b'').strip()
-        if response == "OK":
-            self.callback.rockBlockRxReceived(mtMsn, "")
-        else:
-            content = response[2:-2]
-            self.callback.rockBlockRxReceived(mtMsn, content)
-            self.serial_readline()   #OK
+        b = self.s.read()
+        if b == b'\r':
+            length = int.from_bytes(self.s.read(2), byteorder='big')
+            msg = self.s.read(length)
+            cksum = int.from_bytes(self.s.read(2), byteorder='big')
+
+            # compute checksum
+            mysum = 0
+            for c in msg:
+                mysum += c
+            mysum &= 0xffff
+
+            # compare checksum
+            if mysum != cksum:
+                print("checksum mismatch")
+
+            self.expect("OK")
+#        if response == "OK":
+            self.callback.rockBlockRxReceived(mtMsn, msg)
+#        else:
+#            content = response[2:-2]
+#            self.callback.rockBlockRxReceived(mtMsn, content)
+#            self.serial_readline()   #OK
 
 
     def _clearMoBuffer(self):
