@@ -89,7 +89,7 @@ class RockBlock(object):
         self.SIGNAL_THRESHOLD = 2
 
         # try:
-        self.s = serial.Serial(self.portId, 19200, timeout=5)
+        self.s = serial.Serial(self.portId, 19200, timeout=10)
         if not (self._enableEcho() and self._disableFlowControl and self._disableRingAlerts()):
             self.close()
             raise RockBlockPortException
