@@ -95,14 +95,6 @@ class RockBlock(object):
             raise RockBlockPortException
         self.check_connection()
 
-        print(self.s.get_settings())
-      
-        # except ValueError:
-        #     raise RockBlockSerialException("Bad parameters for Serial")
-        # except serial.SerialException as e1:
-        #     raise RockBlockSerialException("Serial exception {}".format(str(e1)))
-        # except Exception as e2:
-        #     raise RockBlockException("Other exception in serial init {}".format(str(e2)))
             
     ##
     # Serial Specific
