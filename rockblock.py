@@ -94,6 +94,8 @@ class RockBlock(object):
             self.close()
             raise RockBlockPortException
         self.check_connection()
+
+        print(self.s.get_settings())
       
         # except ValueError:
         #     raise RockBlockSerialException("Bad parameters for Serial")
@@ -156,7 +158,6 @@ class RockBlock(object):
 
     #Handy function to check if connection is still alive, callback based on result
     def check_connection(self):
-        self.s.timeout = 5
         if self.ping():
             self.callback.rockBlockConnected()
         else:
@@ -227,12 +228,12 @@ class RockBlock(object):
         
         return response != None
 
+    # TODO: update signal status from here
     def requestSignalStrength(self):
         self._ensureConnectionStatus()
         self.send_command("AT+CSQ")
         self.serial_readline()
         response = self.expect("+CSQ:")
-        self.serial_readline()
         self.expect("OK")
 
         try:
@@ -376,6 +377,7 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         self.send_command("AT+SBDRB")
         response = self.serial_readline().decode('utf-8')
+        # TODO: split on \r read 2-byte length, message, 2-byte checksum
         #response = self.serial_readline().replace(b'AT+SBDRB\r',b'').strip()
         if response == "OK":
             self.callback.rockBlockRxReceived(mtMsn, "")
