@@ -36,12 +36,10 @@ class RockBlockProtocol(object):
     def rockBlockNetworkTime(self, event):pass
 
     #IMEI
-    def rockBlockImei(self, event):pass
+    def imei_event(self, event):pass
 
     #SIGNAL
-    def rockBlockSignalUpdate(self, signal):pass
-    def rockBlockSignalPass(self):pass
-    def rockBlockSignalFail(self):pass
+    def signal_event(self, event):pass
 
     #MT
     def rockBlockRxStarted(self):pass
@@ -83,6 +81,7 @@ class RockBlock(object):
     
     def __init__(self, portId, callback):
         self.s = None
+        print("port={}".format(portId))
         self.portId = portId
         self.callback = callback
         self.autoSession = True     #When True, we'll automatically initiate additional sessions if more messages to download
@@ -190,17 +189,7 @@ class RockBlock(object):
         #Check signal strength
         signal = self.requestSignalStrength()
 
-        self.callback.rockBlockSignalUpdate(signal)
-
-        self.callback.rockBlockSignalFail()
-        return False
-
-        if signal >= self.SIGNAL_THRESHOLD:
-            self.callback.rockBlockSignalPass()
-            return True
-        else:
-            self.callback.rockBlockSignalFail()
-            return False
+        return signal > 0
 
     def _isNetworkTimeValid(self):
         return self.networkTime() != 0
@@ -227,12 +216,13 @@ class RockBlock(object):
         self.serial_readline()
         response = self.expect("+CSQ:")
         self.expect("OK")
-
         try:
             signal = int(response)
         except:
             signal = 0
-        
+        print("signal={}".format(signal))
+        ev = RockBlockEvent(signal, signal > 0)
+        self.callback.signal_event(ev)
         return signal
 
     def networkTime(self):
@@ -255,7 +245,7 @@ class RockBlock(object):
         response = self.serial_readline().decode('utf-8')
         self.serial_readline()   #BLANK
         self.serial_readline()   #OK
-        self.callback.rockBlockImei(RockBlockEvent(response, response != None))
+        self.callback.imei_event(RockBlockEvent(response, response != None))
         return response
 
 

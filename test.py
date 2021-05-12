@@ -75,7 +75,7 @@ class RockBlockTest(RockBlockProtocol):
         print("#### time: {} status: {}".format(event.value, event.status))
         return
 
-    def rockBlockImei(self, event):
+    def imei_event(self, event):
         print("#### imei: {} status: {}".format(event.value, event.status))
         return
 
@@ -83,6 +83,10 @@ class RockBlockTest(RockBlockProtocol):
         return
 
     def rockBlockDisconnected(self):
+        return
+
+    def signal_event(self, event):
+        print("#### signal: {} status: {}".format(event.value, event.status))
         return
 
     def rockBlockSignalUpdate(self, signal):
