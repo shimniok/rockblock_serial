@@ -2,6 +2,7 @@
 
 from rockblock import RockBlock, RockBlockProtocol, RockBlockException
 import sys
+import argparse
 
 
 class RockBlockTest(RockBlockProtocol):
@@ -10,9 +11,13 @@ class RockBlockTest(RockBlockProtocol):
         return
 
     def main(self):
-        
-        print("=== Initializing")
-        rb = RockBlock("/dev/ttyUSB0", self)
+
+        parser = argparse.ArgumentParser(description='test rockblock.')
+        parser.add_argument('--device', nargs=1, metavar='device-name', help='serial device', required=True)
+        args = parser.parse_args()
+
+        print("=== Initializing {}".format(args.device[0]))
+        rb = RockBlock(args.device[0], self)
         
         # print("=== Setup")
         # rb.setup()
