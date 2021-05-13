@@ -89,7 +89,7 @@ class RockBlock(object):
 
         # try:
         self.s = serial.Serial(self.portId, 19200, timeout=10)
-        if not (self._enableEcho() and self._disableFlowControl and self._disableRingAlerts()):
+        if not (self._disableEcho() and self._disableFlowControl and self._disableRingAlerts()):
             self.close()
             raise RockBlockPortException
         self.check_connection()
@@ -133,11 +133,15 @@ class RockBlock(object):
     ##
     
     def send_command(self, command):
+        print(command)
         self.s.write(command.encode('utf-8') + b'\r')
-        echo = self.serial_readline()
+        #echo = self.serial_readline()
 
     def expect(self, expected):
-        response = self.serial_readline().decode('utf-8')
+        while True:
+            response = self.serial_readline().decode('utf-8')
+            if response != "":
+                break
         if response.find(expected) >= 0:
             return response.replace(expected, "")
         else:
@@ -159,7 +163,7 @@ class RockBlock(object):
         
         self.callback.rockBlockRxStarted()
         
-        if self.connectionOk() and self._attemptSession():
+        if self.connectionOk() and self._perform_session():
             return True
         else:
             self.callback.rockBlockRxFailed()
@@ -170,7 +174,7 @@ class RockBlock(object):
         self.callback.rockBlockTxStarted()
 
         if self._queueMessage(msg) and self.connectionOk():
-            if self._attemptSession():
+            if self._perform_session():
                 self.callback.rockBlockTxSuccess()
                 return True
 
@@ -229,8 +233,7 @@ class RockBlock(object):
         self._ensureConnectionStatus()
         self.send_command("AT-MSSTM")
         response = self.expect("-MSSTM: ")
-        self.serial_readline()   #BLANK
-        self.serial_readline()   #OK
+        self.expect("OK")   #OK
         if not response == None and not "no network service" in response:
             utc = int(response, 16)
             utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
@@ -242,9 +245,9 @@ class RockBlock(object):
     def getSerialIdentifier(self):
         self._ensureConnectionStatus()
         self.send_command("AT+GSN")
+        self.serial_readline()
         response = self.serial_readline().decode('utf-8')
-        self.serial_readline()   #BLANK
-        self.serial_readline()   #OK
+        self.expect("OK")
         self.callback.imei_event(RockBlockEvent(response, response != None))
         return response
 
@@ -304,6 +307,12 @@ class RockBlock(object):
         self.send_command("ATE1")
         return not self.expect("OK") == None
 
+    def _disableEcho(self):
+        self._ensureConnectionStatus()
+        self.send_command("ATE0")
+        self.serial_readline()
+        return not self.expect("OK") == None
+
     def _disableFlowControl(self):
         self._ensureConnectionStatus()
         self.send_command("AT&K0")
@@ -314,13 +323,12 @@ class RockBlock(object):
         self.send_command("AT+SBDMTA=0")
         return not self.expect("OK") == None
 
-    def _attemptSession(self):
+    def _perform_session(self):
         self._ensureConnectionStatus()
         self.send_command("AT+SBDIX")
         # +SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
         response = self.expect("+SBDIX: ")
-        self.serial_readline()   #BLANK
-        self.serial_readline()   #OK
+        self.expect("OK")
 
         if response != None:
             parts = response.split(",")
@@ -341,13 +349,17 @@ class RockBlock(object):
 
             if mtStatus == 1 and mtLength > 0: 
                 # SBD message successfully received from the GSS.
-                self._processMtMessage(mtMsn)
+                msg = self._read_mt_message()
+                if msg != None:
+                    self.callback.rockBlockRxReceived(mtMsn, msg)
+            
+            # TODO: handle mtStatus error values
 
             self.callback.rockBlockRxMessageQueue(mtQueued)
 
             #There are additional MT messages to queued to download
             if mtQueued > 0 and self.autoSession == True:
-                self._attemptSession() # TODO: get rid of recursion
+                self._perform_session() # TODO: get rid of recursion
 
             if moStatus <= 4:
                 return True
@@ -355,32 +367,43 @@ class RockBlock(object):
         return False
 
 
-    def _processMtMessage(self, mtMsn):
+    def _read_mt_message(self):
         self._ensureConnectionStatus()
-        self.send_command("AT+SBDRB")
-        b = self.s.read()
-        if b == b'\r':
-            length = int.from_bytes(self.s.read(2), byteorder='big')
-            msg = self.s.read(length)
-            cksum = int.from_bytes(self.s.read(2), byteorder='big')
+        # Command echo back + \r{2-byte length}{message}{2-byte checksum}
+        self.send_command("AT+SBDRB") 
 
+        # response = self.serial_readline()
+        # print("data={}".format(response))
+
+        print("read length")
+        
+        length = int.from_bytes(self.s.read(2), byteorder='big')
+        print("length={:d}".format(length))
+        msg = ""
+        if length > 0:
+            print("read message")
+            msg = self.s.read(length)
             # compute checksum
+            print("compute checksum")
             mysum = 0
             for c in msg:
+                print("c={ch:c} {ch:d}".format(ch=c))
                 mysum += c
             mysum &= 0xffff
 
+        print("read checksum")
+        cksum = int.from_bytes(self.s.read(2), byteorder='big')
+
+        self.expect("OK")
+
+        if length > 0:
             # compare checksum
             if mysum != cksum:
-                print("checksum mismatch")
+                print("checksum mismatch {:d} {:d}".format(mysum, cksum))
 
-            self.expect("OK")
-#        if response == "OK":
-            self.callback.rockBlockRxReceived(mtMsn, msg)
-#        else:
-#            content = response[2:-2]
-#            self.callback.rockBlockRxReceived(mtMsn, content)
-#            self.serial_readline()   #OK
+            return msg
+        
+        return None
 
 
     def _clearMoBuffer(self):

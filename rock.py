@@ -24,9 +24,7 @@ class RockApp(RockBlockProtocol):
         #config_file = config_dir + "/preferences.json"
 
         # TODO: make preferences directory if doesn't exist
-
         # TODO: load preferences file if exists
-
         # TODO: save preferences as they are updated in application
 
         # parser = argparse.ArgumentParser()
@@ -35,7 +33,7 @@ class RockApp(RockBlockProtocol):
         #                     default="/dev/ttyUSB0")
         # args = parser.parse_args()
         self.device = None
-        self.signal = ""
+        self.signal = 0
         self.scr = stdscr
         self.window_init()
         self.event_loop()        
@@ -224,13 +222,13 @@ class RockApp(RockBlockProtocol):
         if self.device == None:
             self.select_port()
             
-        try:
-            rb = RockBlock(self.device, self)
-            rb.connectionOk()
-        except Exception as e:
-            curses.endwin()
-            print("Error: {}: {}\n".format(self.device, e))
-            sys.exit(1)
+#        try:
+        rb = RockBlock(self.device, self)
+        rb.connectionOk()
+#        except Exception as e:
+#            curses.endwin()
+#            print("Error: {}: {}\n".format(self.device, e))
+#            sys.exit(1)
 
         while True:
             curses.curs_set(0)
@@ -324,6 +322,14 @@ class RockApp(RockBlockProtocol):
     ##
     # SIGNAL
     ##
+    
+    def rockBlockSignal(self, event):
+        if event.status:
+            color = self.green
+        else:
+            color = self.red
+        self.print_status("Signal: {}".format(event.value), color)
+    
     def rockBlockSignalFail(self):
         #s = self.generate_signal_str(0)
         #self.w_header.addstr(0, self.right(s, self.full_width), s, self.red)

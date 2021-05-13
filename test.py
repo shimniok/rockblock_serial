@@ -40,15 +40,12 @@ class RockBlockTest(RockBlockProtocol):
         print("=== Network time valid")
         print(rb._isNetworkTimeValid())
 
-        print("=== Read MT Buffer")
-        rb._processMtMessage(999)
-
-        # try:
-        #     print("=== Attempt Session")
-        #     rb._attemptSession()
-        # except Exception as e:
-        #     print(str(e))
-        #     pass
+        try:
+            print("=== Attempt Session")
+            rb._perform_session()
+        except Exception as e:
+            print(str(e))
+            pass
 
         # #moStatus, moMsn, mtStatus, mtMsn, mtLength, mtQueued
         # print("moStatus: {}".format(rb.moStatus))
@@ -58,9 +55,10 @@ class RockBlockTest(RockBlockProtocol):
         # print("mtLength: {}".format(rb.mtLength))
         # print("mtQueued: {}".format(rb.mtQueued))
 
-        # print("=== Process MT Message")
-        # rb._processMtMessage()
-        
+        print("=== Read MT Buffer")
+        rb._read_mt_message()
+
+
         print("=== Closing")
         rb.close()
         
