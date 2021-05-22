@@ -286,10 +286,11 @@ class RockApp(RockBlockProtocol):
     ##
 
     def process_serial(self, text):
-        y, x = self.w_raw.getyx()
-        self.w_raw.addstr(y, x, text+"\n", self.cyan)
-        self.w_raw.clrtoeol()
-        self.w_raw.refresh()
+        if text != "":
+            y, x = self.w_raw.getyx()
+            self.w_raw.addstr(y, x, text+"\n", self.cyan)
+            self.w_raw.clrtoeol()
+            self.w_raw.refresh()
         return
 
     def rockBlockRxStarted(self):
@@ -305,7 +306,6 @@ class RockApp(RockBlockProtocol):
 
     def rockBlockRxMessageQueue(self, count):
         self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))
-        self.w_header.clrtoeol()
         self.w_header.refresh()
 
     def rockBlockTxStarted(self):
@@ -316,7 +316,7 @@ class RockApp(RockBlockProtocol):
 
     def rockBlockTxSuccess(self, momsn):
         self.print_status("TX Succeeded {}".format(str(momsn)), self.green)
-        self.w_message.addstr("me> '{}'\n".format(self.s))
+        # TODO: self.w_message.addstr("me> '{}'\n".format(self.s))
         self.w_message.refresh()
 
     ##
