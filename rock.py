@@ -72,7 +72,7 @@ class RockApp(RockBlockProtocol):
 
         row1_height = 1    # header window
         row3_height = 3    # input window
-        row4_height = 10   # status / raw windows
+        row4_height = 15   # status / raw windows
 
         # message window height
         row2_height = full_height - row1_height - \
