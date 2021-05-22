@@ -174,10 +174,18 @@ class RockBlock(object):
 
         self.callback.rockBlockTxStarted()
 
-        if self._queueMessage(msg) and self.connectionOk():
-            if self._perform_session():
-                self.callback.rockBlockTxSuccess()
-                return True
+        if self._queueMessage(msg):
+            
+            if self.connectionOk():
+                if self._perform_session():
+                    self.callback.rockBlockTxSuccess()
+                    return True
+                else:
+                    self.callback.print_status("perform session failed")
+            else:
+                self.callback.print_status("connectionOK failed")
+        else:
+            self.callback.print_status("queue message failed")
 
         self.callback.rockBlockTxFailed()
 
