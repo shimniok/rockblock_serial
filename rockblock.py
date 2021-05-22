@@ -81,7 +81,7 @@ class RockBlock(object):
     
     def __init__(self, portId, callback):
         self.s = None
-        print("port={}".format(portId))
+        #print("port={}".format(portId))
         self.portId = portId
         self.callback = callback
         self.autoSession = True     #When True, we'll automatically initiate additional sessions if more messages to download
@@ -133,7 +133,7 @@ class RockBlock(object):
     ##
     
     def send_command(self, command):
-        print(command)
+        #print(command)
         self.s.write(command.encode('utf-8') + b'\r')
         #echo = self.serial_readline()
 
@@ -224,7 +224,7 @@ class RockBlock(object):
             signal = int(response)
         except:
             signal = 0
-        print("signal={}".format(signal))
+        #print("signal={}".format(signal))
         ev = RockBlockEvent(signal, signal > 0)
         self.callback.signal_event(ev)
         return signal
@@ -375,32 +375,31 @@ class RockBlock(object):
         # response = self.serial_readline()
         # print("data={}".format(response))
 
-        print("read length")
+        # print("read length")
         
         length = int.from_bytes(self.s.read(2), byteorder='big')
-        print("length={:d}".format(length))
+        # print("length={:d}".format(length))
         msg = ""
         if length > 0:
-            print("read message")
+        #    print("read message")
             msg = self.s.read(length)
             # compute checksum
-            print("compute checksum")
+        #    print("compute checksum")
             mysum = 0
             for c in msg:
-                print("c={ch:c} {ch:d}".format(ch=c))
+        #        print("c={ch:c} {ch:d}".format(ch=c))
                 mysum += c
             mysum &= 0xffff
 
-        print("read checksum")
+        #print("read checksum")
         cksum = int.from_bytes(self.s.read(2), byteorder='big')
 
         self.expect("OK")
 
         if length > 0:
-            # compare checksum
-            if mysum != cksum:
-                print("checksum mismatch {:d} {:d}".format(mysum, cksum))
-
+        #    # compare checksum
+        #    if mysum != cksum:
+        #        print("checksum mismatch {:d} {:d}".format(mysum, cksum))
             return msg
         
         return None
