@@ -199,7 +199,9 @@ class RockApp(RockBlockProtocol):
         self.scr.touchwin()
         self.scr.refresh()
 
-    def print_status(self, status, color):
+    def print_status(self, status, color=None):
+        if color == None:
+            color = self.red
         self.w_status.addstr(status + "\n", color)
         self.w_status.refresh()
 
