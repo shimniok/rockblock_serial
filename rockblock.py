@@ -135,6 +135,7 @@ class RockBlock(object):
     def send_command(self, command):
         #print(command)
         self.s.write(command.encode('utf-8') + b'\r')
+        self.callback.process_serial(command)
         #echo = self.serial_readline()
 
     def expect(self, expected):
