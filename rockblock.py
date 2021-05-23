@@ -44,6 +44,9 @@ class RockBlockProtocol(object):
     #SIGNAL
     def signal_event(self, event):pass
 
+    #SESSION
+    def rockBlockSession(self, mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued):pass
+        
     #MT
     def rockBlockRxStarted(self):pass
     def rockBlockRxFailed(self):pass
@@ -78,7 +81,6 @@ class RockBlockPortException(RockBlockException):
 
 
 class RockBlock(object):
-
     IRIDIUM_EPOCH = 1399818235000   
     #May 11, 2014, at 14:23:55 (This will be 're-epoched' every couple of years!)
     
@@ -152,17 +154,18 @@ class RockBlock(object):
     ##
 
     def messageCheck(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         
         self.callback.rockBlockRxStarted()
         
-        if self.connectionOk() and self._perform_session():
-            return True
+        if self.connectionOk():
+            if self._perform_session():
+                return True
         else:
             self.callback.rockBlockRxFailed()
 
     def sendMessage(self, msg):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.callback.rockBlockTxStarted()
         if self._queueMessage(msg):
             if self.connectionOk():
@@ -180,7 +183,7 @@ class RockBlock(object):
         return False
 
     def connectionOk(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
 
         #Check valid Network Time
         if not self._isNetworkTimeValid():
@@ -195,7 +198,7 @@ class RockBlock(object):
     def _isNetworkTimeValid(self):
         return self.networkTime() != 0
 
-    def _ensureConnectionStatus(self):
+    def _verify_serial_connected(self):
         if self.s == None or self.s.isOpen() == False:
             raise RockBlockException("failed connection status")
 
@@ -204,7 +207,7 @@ class RockBlock(object):
     ##
 
     def ping(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT")
         response = self.expect("OK")
         
@@ -212,7 +215,7 @@ class RockBlock(object):
 
     # TODO: update signal status from here
     def requestSignalStrength(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT+CSQ")
         self.serial_readline()
         response = self.expect("+CSQ:")
@@ -227,7 +230,7 @@ class RockBlock(object):
         return signal
 
     def networkTime(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT-MSSTM")
         response = self.expect("-MSSTM: ")
         self.expect("OK")   #OK
@@ -240,7 +243,7 @@ class RockBlock(object):
         return utc
 
     def getSerialIdentifier(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT+GSN")
         self.serial_readline()
         response = self.serial_readline().decode('utf-8')
@@ -255,7 +258,7 @@ class RockBlock(object):
     # Make sure you DISCONNECT RockBLOCK from power for a few minutes after
     # this command has been issued...
     def setup(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         #Disable Flow Control
         self.send_command("AT&K0")
         self.expect("OK")
@@ -274,7 +277,7 @@ class RockBlock(object):
         return True
 
     def _queueMessage(self, msg):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         if len(msg) > 340:
             raise RockBlockException("message must be 340 bytes or less")
 
@@ -298,28 +301,28 @@ class RockBlock(object):
 
 
     def _enableEcho(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("ATE1")
         return not self.expect("OK") == None
 
     def _disableEcho(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("ATE0")
         self.serial_readline()
         return not self.expect("OK") == None
 
     def _disableFlowControl(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT&K0")
         return not self.expect("OK") == None
 
     def _disableRingAlerts(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT+SBDMTA=0")
         return not self.expect("OK") == None
 
     def _perform_session(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT+SBDIX")
         # +SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
         response = self.expect("+SBDIX: ")
@@ -363,7 +366,7 @@ class RockBlock(object):
 
 
     def _read_mt_message(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         # Command echo back + \r{2-byte length}{message}{2-byte checksum}
         self.send_command("AT+SBDRB") 
 
@@ -401,7 +404,7 @@ class RockBlock(object):
 
 
     def _clearMoBuffer(self):
-        self._ensureConnectionStatus()
+        self._verify_serial_connected()
         self.send_command("AT+SBDD0")
         r1 = self.expect("0")
         self.serial_readline()  #BLANK

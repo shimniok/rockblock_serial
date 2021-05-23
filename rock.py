@@ -321,6 +321,10 @@ class RockApp(RockBlockProtocol):
         # TODO: self.w_message.addstr("me> '{}'\n".format(self.s))
         self.w_message.refresh()
 
+    def rockBlockSession(self, mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued):
+        self.print_status("MO: status={} msn={} - MT: status={} msn={} len={} q={}".format(
+            mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued))
+
     ##
     # SIGNAL
     ##
