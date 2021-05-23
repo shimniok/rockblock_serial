@@ -278,11 +278,9 @@ class RockBlock(object):
         if len(msg) > 340:
             raise RockBlockException("message must be 340 bytes or less")
 
-        command = b'AT+SBDWB=' + str(len(msg)).encode('utf-8')
-        self.s.write(command + b'\r')
-
-        if self.serial_readline() == command:
-            if self.serial_readline() == b'READY':
+        command = "AT+SBDWB={:d}".format(len(msg))
+        self.send_command(command)
+        if self.expect("READY") != None:
                 checksum = 0
                 for c in msg:
                     checksum += c
@@ -290,12 +288,12 @@ class RockBlock(object):
                 self.s.write( checksum >> 8 )
                 self.s.write( checksum & 0xFF )
                 self.serial_readline()   #BLANK
-                result = False
-                if self.serial_readline() == b'0':
-                    result = True
+            self.serial_readline()   #Some number??
                 self.serial_readline()   #BLANK
                 self.serial_readline()   #OK
-                return result
+            return True
+        else:
+            self.callback.print_status("READY message not found")
         return False
 
 
