@@ -208,8 +208,8 @@ class RockApp(RockBlockProtocol):
             color = self.red
         else:
             color = self.yellow
-            
-        self.w_status.addstr(status + "\n", color)
+
+        self.w_status.addstr(message + "\n", color)
         self.w_status.refresh()
 
 
@@ -337,7 +337,7 @@ class RockApp(RockBlockProtocol):
 
     def rockBlockSession(self, mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued):
         self.print_status("MO: status={} msn={}\nMT: status={} msn={} len={} q={}".format(
-            mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued))
+            mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued), self.white)
 
     ##
     # SIGNAL
