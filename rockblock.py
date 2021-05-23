@@ -140,10 +140,10 @@ class RockBlock(object):
         #echo = self.serial_readline()
 
     def expect(self, expected):
-        while True:
+        response = ""
+        while response == "":
             response = self.serial_readline().decode('utf-8')
-            if response != "":
-                break
+
         if response.find(expected) >= 0:
             return response.replace(expected, "")
         else:
