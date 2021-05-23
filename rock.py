@@ -316,7 +316,7 @@ class RockApp(RockBlockProtocol):
     def rockBlockTxFailed(self):
         self.print_status("TX Failed", self.red)
 
-    def rockBlockTxSuccess(self, momsn):
+    def rockBlockTxSuccess(self, momsn=0):
         self.print_status("TX Succeeded {}".format(str(momsn)), self.green)
         # TODO: self.w_message.addstr("me> '{}'\n".format(self.s))
         self.w_message.refresh()
