@@ -158,19 +158,12 @@ class RockBlock(object):
     ##
 
     def messageCheck(self):
-        self._verify_serial_connected()
-        
-        self.callback.rockBlockRxStarted()
-        
         if self.connectionOk():
-            if self._perform_session():
-                return True
+            self._perform_session()
         else:
             self.callback.rockBlockRxFailed()
 
     def sendMessage(self, msg):
-        self._verify_serial_connected()
-        self.callback.rockBlockTxStarted()
         if self._queueMessage(msg):
             if self.connectionOk():
                 if self._perform_session():
