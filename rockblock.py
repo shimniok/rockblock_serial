@@ -281,16 +281,16 @@ class RockBlock(object):
         command = "AT+SBDWB={:d}".format(len(msg))
         self.send_command(command)
         if self.expect("READY") != None:
-                checksum = 0
-                for c in msg:
-                    checksum += c
-                self.s.write( msg )
-                self.s.write( checksum >> 8 )
-                self.s.write( checksum & 0xFF )
-                self.serial_readline()   #BLANK
+            checksum = 0
+            for c in msg:
+                checksum += c
+            self.s.write( msg )
+            self.s.write( checksum >> 8 )
+            self.s.write( checksum & 0xFF )
+            self.serial_readline()   #BLANK
             self.serial_readline()   #Some number??
-                self.serial_readline()   #BLANK
-                self.serial_readline()   #OK
+            self.serial_readline()   #BLANK
+            self.serial_readline()   #OK
             return True
         else:
             self.callback.print_status("READY message not found")
