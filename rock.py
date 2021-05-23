@@ -270,12 +270,14 @@ class RockApp(RockBlockProtocol):
                 curses.curs_set(1)
                 curses.echo()
                 self.w_input.refresh()
-                self.s = self.w_input.getstr()  # read message string
+                self.s = self.w_input.getstr() # read message string
 
                 while not rb.sendMessage(self.s):
                     pass
 
-                self.w_message.addstr("me> '{}'\n".format(self.s))
+                self.w_message.addstr("me> '{}'\n".format(self.s.decode('utf-8')), self.white)
+                self.w_message.refresh()
+
                 curses.curs_set(0)
                 curses.noecho()
                 self.w_input.erase()

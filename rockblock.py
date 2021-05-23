@@ -366,7 +366,7 @@ class RockBlock(object):
             # compare checksum
             if mysum != cksum:
                 self.callback.status("checksum mismatch {:d} {:d}".format(mysum, cksum), RockBlockProtocol.STATUS_ERROR)
-            return msg
+            return msg.decode('utf-8')
         
         return None
 
