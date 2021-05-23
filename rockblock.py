@@ -28,6 +28,9 @@ class RockBlockProtocol(object):
     #RAW OUTPUT
     def process_serial(self, text):pass
 
+    #STATUS
+    def print_status(self, text, color):pass
+
     #CONNECTION
     def rockBlockConnected(self):pass
     def rockBlockDisconnected(self):pass
