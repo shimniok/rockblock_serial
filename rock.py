@@ -301,9 +301,10 @@ class RockApp(RockBlockProtocol):
     def rockBlockRxFailed(self):
         self.print_status("RX Failed", self.red)
 
-    def rockBlockRxReceived(self, mtmsn, data):
+    def rockBlockRxReceived(self, mtmsn, msg):
+        if not msg == None:
         self.w_message.addstr(
-            "base> '{}' #{}\n".format(data, mtmsn), self.green)
+                "base> '{}' #{}\n".format(msg, mtmsn), self.green)
         self.w_message.refresh()
 
     def rockBlockRxMessageQueue(self, count):
