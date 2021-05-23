@@ -275,6 +275,9 @@ class RockBlock(object):
 
     def _queueMessage(self, msg):
         self._verify_serial_connected()
+
+        self.callback.print_status("adding message to MO buffer")
+
         if len(msg) > 340:
             raise RockBlockException("message must be 340 bytes or less")
 
@@ -320,73 +323,56 @@ class RockBlock(object):
 
     def _perform_session(self):
         self._verify_serial_connected()
+
+        self.callback.print_status("session started")
+
         self.send_command("AT+SBDIX")
         # +SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
         response = self.expect("+SBDIX: ")
         self.expect("OK")
 
-        if response != None:
-            parts = response.split(",")
-            moStatus = int(parts[0])
-            moMsn = int(parts[1])
-            mtStatus = int(parts[2])
-            mtMsn = int(parts[3])
-            mtLength = int(parts[4])
-            mtQueued = int(parts[5])
+        if response == None:
+            self.callback.print_status("Session response not found")
+            return False
 
-            #Mobile Originated
-            if moStatus <= 4:
-                self._clearMoBuffer()
-                self.callback.rockBlockTxSuccess( moMsn )
-                pass
-            else:
-                self.callback.rockBlockTxFailed()
+        parts = response.split(",")
+        moStatus = int(parts[0])
+        moMsn = int(parts[1])
+        mtStatus = int(parts[2])
+        mtMsn = int(parts[3])
+        mtLength = int(parts[4])
+        mtQueued = int(parts[5])
 
-            if mtStatus == 1 and mtLength > 0: 
-                # SBD message successfully received from the GSS.
-                msg = self._read_mt_message()
-                if msg != None:
-                    self.callback.rockBlockRxReceived(mtMsn, msg)
-            
-            # TODO: handle mtStatus error values
+        self.callback.rockBlockSession(moStatus, moMsn, mtStatus, mtMsn, mtLength, mtQueued)
 
-            self.callback.rockBlockRxMessageQueue(mtQueued)
+        #Mobile Originated
+        if moStatus <= 4:
+            self._clearMoBuffer()
 
-            #There are additional MT messages to queued to download
-            if mtQueued > 0 and self.autoSession == True:
-                self._perform_session() # TODO: get rid of recursion
+        if mtStatus == 1 and mtLength > 0: 
+            # SBD message successfully received from the GSS.
+            msg = self._read_mt_message()
+            self.callback.rockBlockRxReceived(mtMsn, msg)
+        # TODO: handle mtStatus error values
 
-            if moStatus <= 4:
-                return True
-
-        return False
-
+        return moStatus <= 4
 
     def _read_mt_message(self):
         self._verify_serial_connected()
-        # Command echo back + \r{2-byte length}{message}{2-byte checksum}
+
+        self.callback.print_status("Reading MT message")
+
         self.send_command("AT+SBDRB") 
-
-        # response = self.serial_readline()
-        # print("data={}".format(response))
-
-        # print("read length")
-        
         length = int.from_bytes(self.s.read(2), byteorder='big')
-        # print("length={:d}".format(length))
         msg = ""
         if length > 0:
-        #    print("read message")
             msg = self.s.read(length)
             # compute checksum
-        #    print("compute checksum")
             mysum = 0
             for c in msg:
-        #        print("c={ch:c} {ch:d}".format(ch=c))
                 mysum += c
             mysum &= 0xffff
 
-        #print("read checksum")
         cksum = int.from_bytes(self.s.read(2), byteorder='big')
 
         self.expect("OK")
@@ -402,6 +388,7 @@ class RockBlock(object):
 
     def _clearMoBuffer(self):
         self._verify_serial_connected()
+        self.callback.print_status("clearing MO buffer")
         self.send_command("AT+SBDD0")
         r1 = self.expect("0")
         self.serial_readline()  #BLANK
