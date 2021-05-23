@@ -262,10 +262,10 @@ class RockApp(RockBlockProtocol):
                 self.w_input.erase()
                 self.w_input.refresh()
                 self.w_input.move(0, 1)
-                rb.sendMessage(self.s)
+                if rb.sendMessage(self.s):
+                    self.w_message.addstr("me> '{}'\n".format(self.s))
             elif c == "r": # receive message
                 rb.messageCheck()
-
 
     ##
     # String alignment
