@@ -95,8 +95,6 @@ class RockBlock(object):
         if not (self._disableEcho() and self._disableFlowControl and self._disableRingAlerts()):
             self.close()
             raise RockBlockPortException
-        self.check_connection()
-
             
     ##
     # Serial Specific
