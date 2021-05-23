@@ -134,10 +134,8 @@ class RockBlock(object):
     ##
     
     def send_command(self, command):
-        #print(command)
         self.s.write(command.encode('utf-8') + b'\r')
         self.callback.process_serial(command)
-        #echo = self.serial_readline()
 
     def expect(self, expected):
         response = ""
@@ -165,14 +163,10 @@ class RockBlock(object):
 
     def sendMessage(self, msg):
         self._ensureConnectionStatus()
-
         self.callback.rockBlockTxStarted()
-
         if self._queueMessage(msg):
-            
             if self.connectionOk():
                 if self._perform_session():
-                    self.callback.rockBlockTxSuccess()
                     return True
                 else:
                     self.callback.print_status("perform session failed")
