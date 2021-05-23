@@ -199,6 +199,20 @@ class RockApp(RockBlockProtocol):
         self.scr.touchwin()
         self.scr.refresh()
 
+    def status(self, message, status):
+        if status == self.STATUS_INFO:
+            color = self.white
+        elif status == self.STATUS_SUCCESS:
+            color = self.green
+        elif status == self.STATUS_ERROR:
+            color = self.red
+        else:
+            color = self.yellow
+            
+        self.w_status.addstr(status + "\n", color)
+        self.w_status.refresh()
+
+
     def print_status(self, status, color=None):
         if color == None:
             color = self.red
@@ -303,9 +317,9 @@ class RockApp(RockBlockProtocol):
 
     def rockBlockRxReceived(self, mtmsn, msg):
         if not msg == None:
-        self.w_message.addstr(
+            self.w_message.addstr(
                 "base> '{}' #{}\n".format(msg, mtmsn), self.green)
-        self.w_message.refresh()
+            self.w_message.refresh()
 
     def rockBlockRxMessageQueue(self, count):
         self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))

@@ -25,6 +25,10 @@ class RockBlockEvent(object):
 
 class RockBlockProtocol(object):
 
+    STATUS_INFO = 0
+    STATUS_SUCCESS = 1
+    STATUS_ERROR = 2
+
     #RAW OUTPUT
     def process_serial(self, text):pass
 
