@@ -152,13 +152,6 @@ class RockBlock(object):
     # RB Protocol Methods
     ##
 
-    #Handy function to check if connection is still alive, callback based on result
-    def check_connection(self):
-        if self.ping():
-            self.callback.rockBlockConnected()
-        else:
-            self.callback.rockBlockDisconnected()
-
     def messageCheck(self):
         self._ensureConnectionStatus()
         
