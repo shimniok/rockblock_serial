@@ -303,22 +303,27 @@ class RockBlock(object):
 
         self.callback.status("adding message to buffer",
                              RockBlockProtocol.STATUS_INFO)
-        self.callback.status("adding message to buffer", RockBlockProtocol.STATUS_INFO)
-
-        command = "AT+SBDWB={:d}".format(len(msg))
-        self.send_command(command)
+        self.send_command("AT+SBDWB={:d}".format(len(msg)))
         if self.expect("READY") != None:
             checksum = 0
             for c in msg:
                 checksum += c
-            self.s.write( msg )
-            self.s.write( checksum >> 8 )
-            self.s.write( checksum & 0xFF )
-            self.serial_readline()   #BLANK
-            self.serial_readline()   #Some number??
-            self.serial_readline()   #BLANK
-            self.serial_readline()   #OK
-            self.callback.status("message queued", RockBlockProtocol.STATUS_SUCCESS)
+                print("c=0x{char:x} {char:d} {char:c} s=0x{sum:04x} {sum:d}".format(
+                    char=c, sum=checksum))
+            checksum &= 0xFFFF
+            self.serial_write(msg)
+            self.serial_write(checksum >> 8)
+            self.serial_write(checksum & 0xFF)
+            response = self.expect("0")
+            self.serial_readline()  # BLANK
+            self.serial_readline()  # OK
+            if response == None:
+                self.callback.status(
+                    "checksum error", RockBlockProtocol.STATUS_ERROR)
+                return False
+            else:
+                self.callback.status(
+                    "message queued", RockBlockProtocol.STATUS_SUCCESS)
             return True
         else:
             self.callback.status("READY message not found",
