@@ -4,9 +4,8 @@ from rockblock import RockBlock, RockBlockProtocol, RockBlockException
 import sys
 import argparse
 
-
 class RockBlockTest(RockBlockProtocol):
-
+    
     def __init__(self):
         return
 
@@ -19,33 +18,39 @@ class RockBlockTest(RockBlockProtocol):
         print("=== Initializing {}".format(args.device[0]))
         rb = RockBlock(args.device[0], self)
         
-        # print("=== Setup")
-        # rb.setup()
+        # only do this once!!!
+        #print("=== Setup")
+        #rb.setup()
         
         print("=== Ping")
         rb.ping()
         
-        print("=== Disable ring alerts")
-        rb._disableRingAlerts()
-        
-        print("=== Signal strength")
-        signal = rb.requestSignalStrength()
-        
-        print("=== Network time")
-        rb.networkTime()
-        
-        print("=== IMEI")
-        rb.getSerialIdentifier()
+        if rb._queueMessage(b"hello"):
+            print("success")
+        else:
+            print("failure")
 
-        print("=== Network time valid")
-        print(rb._isNetworkTimeValid())
+        # print("=== Disable ring alerts")
+        # rb._disableRingAlerts()
+        
+        # print("=== Signal strength")
+        # signal = rb.requestSignalStrength()
+        
+        # print("=== Network time")
+        # rb.networkTime()
+        
+        # print("=== IMEI")
+        # rb.getSerialIdentifier()
 
-        try:
-            print("=== Attempt Session")
-            rb._perform_session()
-        except Exception as e:
-            print(str(e))
-            pass
+        # print("=== Network time valid")
+        # print(rb._isNetworkTimeValid())
+
+        # try:
+        #     print("=== Attempt Session")
+        #     rb._perform_session()
+        # except Exception as e:
+        #     print(str(e))
+        #     pass
 
         # #moStatus, moMsn, mtStatus, mtMsn, mtLength, mtQueued
         # print("moStatus: {}".format(rb.moStatus))
@@ -55,8 +60,8 @@ class RockBlockTest(RockBlockProtocol):
         # print("mtLength: {}".format(rb.mtLength))
         # print("mtQueued: {}".format(rb.mtQueued))
 
-        print("=== Read MT Buffer")
-        rb._read_mt_message()
+        # print("=== Read MT Buffer")
+        # rb._read_mt_message()
 
 
         print("=== Closing")
@@ -66,7 +71,7 @@ class RockBlockTest(RockBlockProtocol):
     def process_serial(self, text):
         print("    <{}>".format(text))
         for c in text.encode('utf-8'):
-            print("    {char:d} {char:c}".format(char=c))
+            print("    0x{char:x} {char:c}".format(char=c))
         return
 
     def rockBlockNetworkTime(self, event):
@@ -118,6 +123,9 @@ class RockBlockTest(RockBlockProtocol):
     def rockBlockTxSuccess(self, momsn):
         return
 
+    def status(self, message, status):
+        print("{} {}".format( message, status))
+        return
 
 if __name__ == '__main__':
     RockBlockTest().main()
