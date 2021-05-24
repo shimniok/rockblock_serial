@@ -143,10 +143,6 @@ class RockBlock(object):
         self.callback.process_serial(text.decode('utf-8'))
         return text
 
-    def serial_write(self, data):
-        self.s.write(data)
-        self.callback.process_serial(data)
-
     ##
     # Parsing
     ##
@@ -311,9 +307,12 @@ class RockBlock(object):
                 print("c=0x{char:x} {char:d} {char:c} s=0x{sum:04x} {sum:d}".format(
                     char=c, sum=checksum))
             checksum &= 0xFFFF
-            self.serial_write(msg)
-            self.serial_write(checksum >> 8)
-            self.serial_write(checksum & 0xFF)
+            self.s.write(msg)
+            self.s.write(bytes([2]))
+            self.s.write(bytes([20]))
+            #self.s.write(checksum>>8)
+            #self.s.write(checksum & 0xFF)
+            #print("Sending: {} 0x{:02x}{:02x}".format(msg, checksum >> 8, checksum & 0xFF))
             response = self.expect("0")
             self.serial_readline()  # BLANK
             self.serial_readline()  # OK
