@@ -135,6 +135,10 @@ class RockBlock(object):
         self.callback.process_serial(text.decode('utf-8'))
         return text
 
+    def serial_write(self, data):
+        self.s.write(data)
+        self.callback.process_serial(data)
+
     ##
     # Parsing
     ##
