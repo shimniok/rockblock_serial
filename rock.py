@@ -8,7 +8,8 @@ import curses
 import argparse
 from curses import wrapper
 import math
-from appdirs import user_config_dir
+#from appdirs import user_config_dir
+from log import MessageLog
 
 class RockApp(RockBlockProtocol):
 
@@ -18,8 +19,7 @@ class RockApp(RockBlockProtocol):
     # MAIN
     ##
     def main(self, stdscr, *args, **kwargs):
-
-
+        self.log = MessageLog("messages.log")
         #config_dir = user_config_dir("RockBlockSerial", "BotThoughts")
         #config_file = config_dir + "/preferences.json"
 
@@ -275,7 +275,9 @@ class RockApp(RockBlockProtocol):
                 while not rb.sendMessage(self.s):
                     pass
 
-                self.w_message.addstr("me> '{}'\n".format(self.s.decode('utf-8')), self.white)
+                my_msg = "me> '{}'\n".format(self.s.decode('utf-8'))
+                self.log.log_message(my_msg)
+                self.w_message.addstr(my_msg, self.white)
                 self.w_message.refresh()
 
                 curses.curs_set(0)
@@ -323,9 +325,12 @@ class RockApp(RockBlockProtocol):
 
     def rockBlockRxReceived(self, mtmsn, msg):
         if not msg == None:
-            self.w_message.addstr(
-                "base> '{}' #{}\n".format(msg, mtmsn), self.green)
+            their_msg = "base> '{}' #{}\n".format(msg, mtmsn)
+            self.log.log_message(their_msg)
+            self.w_message.addstr(their_msg, self.green)
             self.w_message.refresh()
+
+            #TODO: log message
 
     def rockBlockRxMessageQueue(self, count):
         self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))
