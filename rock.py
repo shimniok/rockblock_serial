@@ -207,12 +207,14 @@ class RockApp(RockBlockProtocol):
 
     def generate_signal_str(self, signal):
         bars = ['\u2581', '\u2582', '\u2583', '\u2584', '\u2585']
-        s = "Signal:["
-        for i in range(0, signal):
-            s += bars[i]
-        for i in range(signal, 5):
-            s += "_"
-        s += "]"
+        s = "Signal: "
+        if signal == 0:
+            s += "X    "
+        else:
+            for i in range(0, signal):
+                s += bars[i]
+            for i in range(signal, 5):
+                s += " "
         return s
 
     ##
@@ -355,22 +357,15 @@ class RockApp(RockBlockProtocol):
             color = self.red
         self.print_status("Signal: {}".format(event.value), color)
     
-    def rockBlockSignalFail(self):
-        #s = self.generate_signal_str(0)
-        #self.w_header.addstr(0, self.right(s, self.full_width), s, self.red)
-        #self.w_header.refresh()
-        self.print_status("Signal Fail", self.red)
-        return
-
-    def rockBlockSignalPass(self):
-        self.print_status("Signal Pass", self.green)
-        return
-
     def rockBlockSignalUpdate(self, signal):
         s = self.generate_signal_str(signal)
-        self.print_status("Signal: {}".format(s), self.white)
-        #self.w_header.addstr(0, self.full_width - len(s) - 2, s, color)
-        #self.w_header.refresh()
+        #self.print_status("Signal: {}".format(s), self.white)
+        if signal > 0:
+            color = self.cyan
+        else:
+            color = self.red
+        self.w_header.addstr(0, self.full_width - len(s) - 2, s, color)
+        self.w_header.refresh()
         return
 
     ##

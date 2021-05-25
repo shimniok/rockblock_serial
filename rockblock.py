@@ -253,8 +253,7 @@ class RockBlock(object):
             signal = int(response)
         except:
             signal = 0
-        self.callback.status("Signal: {:d}".format(
-            signal), RockBlockProtocol.STATUS_INFO)
+        self.callback.rockBlockSignalUpdate(signal)
 #        ev = RockBlockEvent(signal, signal > 0)
 #        self.callback.signal_event(ev)
         return signal
