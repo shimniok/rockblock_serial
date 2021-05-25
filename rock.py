@@ -256,9 +256,8 @@ class RockApp(RockBlockProtocol):
                 self.w_input.refresh()
                 self.s = self.w_input.getstr() # read message string
 
-                while not rb.sendMessage(self.s):
-                    pass
-
+                # TODO: save message if not sent successfully
+                if rb.sendMessage(self.s):
                 my_msg = "me> '{}'\n".format(self.s.decode('utf-8'))
                 self.log.log_message(my_msg)
                 self.w_message.addstr(my_msg, self.white)
