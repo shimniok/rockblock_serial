@@ -6,6 +6,7 @@ import sys
 import threading
 import curses
 import argparse
+from datetime import datetime
 import time
 from curses import wrapper
 import math
@@ -226,49 +227,61 @@ class RockApp(RockBlockProtocol):
         rb = RockBlock(self.device, self)
         rb.connectionOk()
 
+        previous_time = datetime.now()
+
         while True:
             curses.curs_set(0)
-            c = self.w_input.getkey()
-            if c == "q": # quit
-                rb.close()
-                break
-            elif c == "s": # get signal strength
-                rb.requestSignalStrength()
-            elif c == "i": # get IMEI
-                imei = rb.getSerialIdentifier()
-                self.print_status(imei, self.cyan)
-            elif c == "t": # network time
-                tm = rb.networkTime()
-                self.print_status(str(tm), self.cyan)
-            elif c == "b": # clear MO buffer
-                if rb._clearMoBuffer():
-                    self.print_status("MO buffer clear", self.white)
-                else:
-                    self.print_status("MO buffer clear fail", self.red)
-            elif c == "c": # check status
-                rb.checkStatus()
-            elif c == "m": # send message
-                self.w_input.addstr(0, 0, "Message> ")
-                curses.curs_set(1)
-                curses.echo()
-                self.w_input.refresh()
-                self.s = self.w_input.getstr() # read message string
 
-                # TODO: save message if not sent successfully
-                if rb.sendMessage(self.s):
-                    my_msg = "me> '{}'\n".format(self.s.decode('utf-8'))
-                    self.log.log_message(my_msg)
-                    self.w_message.addstr(my_msg, self.white)
-                    self.w_message.refresh()
-
-                curses.curs_set(0)
-                curses.noecho()
-                self.w_input.erase()
-                self.w_input.refresh()
-                self.w_input.move(0, 1)
-
-            elif c == "r": # receive message
-                rb.messageCheck()
+            # Character input
+            curses.halfdelay(5)
+            try:
+                c = self.w_input.getkey()
+                if c == "q": # quit
+                    rb.close()
+                    break
+                elif c == "s": # get signal strength
+                    rb.requestSignalStrength()
+                elif c == "i": # get IMEI
+                    imei = rb.getSerialIdentifier()
+                    self.print_status(imei, self.cyan)
+                elif c == "t": # network time
+                    tm = rb.networkTime()
+                    self.print_status(str(tm), self.cyan)
+                elif c == "b": # clear MO buffer
+                    if rb._clearMoBuffer():
+                        self.print_status("MO buffer clear", self.white)
+                    else:
+                        self.print_status("MO buffer clear fail", self.red)
+                elif c == "c": # check status
+                    rb.checkStatus()
+                elif c == "m": # send message
+                    self.w_input.addstr(0, 0, "Message> ")
+                    curses.curs_set(1)
+                    curses.echo()
+                    self.w_input.refresh()
+                    self.s = self.w_input.getstr() # read message string
+                    # TODO: save message if not sent successfully
+                    if rb.sendMessage(self.s):
+                        my_msg = "me> '{}'\n".format(self.s.decode('utf-8'))
+                        self.log.log_message(my_msg)
+                        self.w_message.addstr(my_msg, self.white)
+                        self.w_message.refresh()
+                    curses.curs_set(0)
+                    curses.noecho()
+                    self.w_input.erase()
+                    self.w_input.refresh()
+                    self.w_input.move(0, 1)
+                elif c == "r": # receive message
+                    rb.messageCheck()
+            
+            except Exception as e:
+                # Timing intervals
+                elapsed_time = datetime.now() - previous_time
+                if elapsed_time.seconds > 20:
+                    rb.requestSignalStrength()
+                    rb.checkStatus()
+                    previous_time = datetime.now()
+            
 
     ##
     # String alignment
@@ -354,8 +367,8 @@ class RockApp(RockBlockProtocol):
         return
 
     def rockBlockSignalUpdate(self, signal):
-        #s = self.generate_signal_str(signal)
-        self.print_status("Signal: {}".format(signal), self.white)
+        s = self.generate_signal_str(signal)
+        self.print_status("Signal: {}".format(s), self.white)
         #self.w_header.addstr(0, self.full_width - len(s) - 2, s, color)
         #self.w_header.refresh()
         return
