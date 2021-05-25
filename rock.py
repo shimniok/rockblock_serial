@@ -27,11 +27,6 @@ class RockApp(RockBlockProtocol):
         # TODO: load preferences file if exists
         # TODO: save preferences as they are updated in application
 
-        # parser = argparse.ArgumentParser()
-        # parser.add_argument("-d", "--device",
-        #                     help="specify serial device/port connected to RockBLOCK",
-        #                     default="/dev/ttyUSB0")
-        # args = parser.parse_args()
         self.device = None
         self.signal = 0
         self.scr = stdscr
