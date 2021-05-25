@@ -6,13 +6,14 @@ import sys
 import threading
 import curses
 import argparse
+import time
 from curses import wrapper
 import math
 from log import MessageLog
 
 class RockApp(RockBlockProtocol):
 
-    helptxt = "[q]uit [m]sg-send [r]eceive-msg [i]mei [s]ignal [b]uf-mo-clr"
+    helptxt = "[q]uit [m]sg-send [r]eceive-msg [i]mei [s]ignal [c]heck-status [b]uf-mo-clr"
 
     ##
     # MAIN
@@ -249,6 +250,8 @@ class RockApp(RockBlockProtocol):
                     self.print_status("MO buffer clear", self.white)
                 else:
                     self.print_status("MO buffer clear fail", self.red)
+            elif c == "c": # check status
+                rb.checkStatus()
             elif c == "m": # send message
                 self.w_input.addstr(0, 0, "Message> ")
                 curses.curs_set(1)
@@ -258,10 +261,10 @@ class RockApp(RockBlockProtocol):
 
                 # TODO: save message if not sent successfully
                 if rb.sendMessage(self.s):
-                my_msg = "me> '{}'\n".format(self.s.decode('utf-8'))
-                self.log.log_message(my_msg)
-                self.w_message.addstr(my_msg, self.white)
-                self.w_message.refresh()
+                    my_msg = "me> '{}'\n".format(self.s.decode('utf-8'))
+                    self.log.log_message(my_msg)
+                    self.w_message.addstr(my_msg, self.white)
+                    self.w_message.refresh()
 
                 curses.curs_set(0)
                 curses.noecho()

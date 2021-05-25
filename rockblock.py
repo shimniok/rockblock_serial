@@ -94,7 +94,6 @@ class RockBlock(object):
 
     def __init__(self, portId, callback):
         self.s = None
-        # print("port={}".format(portId))
         self.portId = portId
         self.callback = callback
         # When True, we'll automatically initiate additional sessions if more
@@ -288,6 +287,18 @@ class RockBlock(object):
         self.expect("OK")
         self.callback.imei_event(RockBlockEvent(response, response != None))
         return response
+
+    def checkStatus(self):
+        self.send_command("AT+SBDSX")
+        response = self.expect("+SBDSX: ")
+        r = []
+        if response != None:
+            r = response.split(", ")
+        # 0 <MO flag>, 1 <MOMSN>, 2 <MT flag>, 3 <MTMSN>, 4 <RA flag>, 5 <msg waiting>
+        self.expect("OK")
+        self.callback.status("Status: moflg={} mtflg={} ring={} msg wait={}".format(
+            r[0], r[2], r[4], r[5]), RockBlockProtocol.STATUS_INFO)
+        return
 
     def _queueMessage(self, msg):
         self._verify_serial_connected()
