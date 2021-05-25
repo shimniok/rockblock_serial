@@ -304,15 +304,10 @@ class RockBlock(object):
             checksum = 0
             for c in msg:
                 checksum += c
-                print("c=0x{char:x} {char:d} {char:c} s=0x{sum:04x} {sum:d}".format(
-                    char=c, sum=checksum))
             checksum &= 0xFFFF
             self.s.write(msg)
-            self.s.write(bytes([2]))
-            self.s.write(bytes([20]))
-            #self.s.write(checksum>>8)
-            #self.s.write(checksum & 0xFF)
-            #print("Sending: {} 0x{:02x}{:02x}".format(msg, checksum >> 8, checksum & 0xFF))
+            self.s.write(bytes([checksum >> 8]))
+            self.s.write(bytes([checksum & 0xFF]))
             response = self.expect("0")
             self.serial_readline()  # BLANK
             self.serial_readline()  # OK
