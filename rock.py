@@ -271,7 +271,7 @@ class RockApp(RockBlockProtocol):
                     self.s = self.w_input.getstr() # read message string
                     # TODO: save message if not sent successfully
                     if rb.sendMessage(self.s):
-                        my_msg = "me> '{}'\n".format(self.s.decode('utf-8'))
+                        my_msg = "me> {}\n".format(self.s.decode('utf-8'))
                         self.log.log_message(my_msg)
                         self.w_message.addstr(my_msg, self.white)
                         self.w_message.refresh()
@@ -327,7 +327,7 @@ class RockApp(RockBlockProtocol):
 
     def rockBlockRxReceived(self, mtmsn, msg):
         if not msg == None:
-            their_msg = "base> '{}' #{}\n".format(msg, mtmsn)
+            their_msg = "base> {:s}\n".format(msg)
             self.log.log_message(their_msg)
             self.w_message.addstr(their_msg, self.green)
             self.w_message.refresh()
