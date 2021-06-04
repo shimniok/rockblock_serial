@@ -14,7 +14,7 @@ from log import MessageLog
 
 class RockApp(RockBlockProtocol):
 
-    helptxt = "[q]uit [m]sg-send [r]eceive-msg [i]mei [s]ignal [c]heck-status [b]uf-mo-clr"
+    helptxt = "[q]uit [m]sg-send [r]eceive-msg [i]mei [s]ignal [c]heck-status [b]uf-clr"
 
     ##
     # MAIN
