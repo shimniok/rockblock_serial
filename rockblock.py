@@ -139,8 +139,8 @@ class RockBlock(object):
 
     def serial_readline(self):
         try:
-        text = self.s.readline().strip()
-        self.callback.process_serial(text.decode('utf-8'))
+            text = self.s.readline().strip()
+            self.callback.process_serial(text.decode('utf-8'))
         except OSError as e:
             raise RockBlockSerialException(msg=e.strerror)
         return text
@@ -151,8 +151,8 @@ class RockBlock(object):
 
     def send_command(self, command):
         try:
-        self.s.write(command.encode('utf-8') + b'\r')
-        self.callback.process_serial(command)
+            self.s.write(command.encode('utf-8') + b'\r')
+            self.callback.process_serial(command)
         except OSError as e:
             raise RockBlockSerialException(msg=e.strerror)
 
@@ -207,7 +207,7 @@ class RockBlock(object):
         #     return False
         # else:
         #     return True
-            return True
+        return True
 
     def _isNetworkTimeValid(self):
         return self.networkTime() != 0
@@ -391,7 +391,7 @@ class RockBlock(object):
             return True
         else:
             self.callback.status(
-                "session failed", RockBlockProtocol.STATUS_ERROR)
+                "session failed: ".format(self.mo_status_to_string(moStatus)), RockBlockProtocol.STATUS_ERROR)
             return False
 
     def _read_mt_message(self):
@@ -475,3 +475,60 @@ class RockBlock(object):
         self._verify_serial_connected()
         self.send_command("AT+SBDMTA=0")
         return not self.expect("OK") == None
+
+    """
+    0 MO message, if any, transferred successfully.
+    1 MO message, if any, transferred successfully, but the MT message in the queue was too big to be transferred.
+    2 MO message, if any, transferred successfully, but the requested Location Update was not accepted.
+    3..4 Reserved, but indicate MO session success if used. 5..8 Reserved, but indicate MO session failure if used.
+    10 GSS reported that the call did not complete in the allowed time.
+    11 MO message queue at the GSS is full.
+    12 MO message has too many segments.
+    13 GSS reported that the session did not complete.
+    14 Invalid segment size.
+    15 Access is denied.
+    ISU-reported values:
+    16 ISU has been locked and may not make SBD calls (see +CULK command).
+    17 Gateway not responding (local session timeout).
+    18 Connection lost (RF drop).
+    19 Link failure (A protocol error caused termination of the call).
+    20..31 Reserved, but indicate failure if used.
+    32 No network service, unable to initiate call.
+    33 Antenna fault, unable to initiate call.
+    34 Radio is disabled, unable to initiate call (see *Rn command).
+    35 ISU is busy, unable to initiate call.
+    36 Try later, must wait 3 minutes since last registration.
+    37 SBD service is temporarily disabled.
+    38 Try later, traffic management period (see +SBDLOE command)
+    39..63 Reserved, but indicate failure if used.
+    64 Band violation (attempt to transmit outside permitted frequency band).
+    65 PLL lock failure; hardware error during attempted transmit.
+    """
+    
+    mo_status_codes = {
+        "0": "MO message transferred.",
+        "1": "MO message transferred. MT message in queue too big.",
+        "2": "MO message transferred. Location update rejected.",
+        "10": "GSS: call did not complete in time.",
+        "11": "GSS: MO message queue full.",
+        "12": "MO message has too many segments.",
+        "13": "GSS: session did not complete.",
+        "14": "Invalid segment size.",
+        "15": "Access is denied.",
+        "16": "ISU locked, (see AT+CULK command).",
+        "17": "Gateway not responding (local session timeout).",
+        "18": "Connection lost (RF drop).",
+        "19": "Link failure (A protocol error caused termination of the call).",
+        "32": "No network service, unable to initiate call.",
+        "33": "Antenna fault, unable to initiate call.",
+        "34": "Radio is disabled, unable to initiate call (see AT*Rn command)",
+        "35": "ISU is busy, unable to initiate call.",
+        "36": "Try later, must wait 3 minutes since last registration.",
+        "37": "SBD service is temporarily disabled.",
+        "38": "Try later, traffic management period (see +SBDLOE command).",
+        "64": "Band violation (attempt to transmit outside permitted frequency band).",
+        "65": "PLL lock failure; hardware error during attempted transmit."
+    }
+
+    def mo_status_to_string(self, err):
+        return self.mo_status_codes[err]
