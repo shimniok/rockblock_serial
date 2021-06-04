@@ -226,9 +226,12 @@ class RockApp(RockBlockProtocol):
         if self.device == None:
             self.select_port()
             
+        # TODO: outbox queue, inbox queue, signal queue, ring alert, background processing/thread/queue
+
         rb = RockBlock(self.device, self)
         rb.connectionOk()
 
+        polling_interval = 10
         previous_time = datetime.now()
 
         while True:
@@ -276,10 +279,10 @@ class RockApp(RockBlockProtocol):
                 elif c == "r": # receive message
                     rb.messageCheck()
             
-            except Exception as e:
+            except Exception as e: # character input timeout
                 # Timing intervals
                 elapsed_time = datetime.now() - previous_time
-                if elapsed_time.seconds > 20:
+                if elapsed_time.seconds > polling_interval:
                     rb.requestSignalStrength()
                     rb.checkStatus()
                     previous_time = datetime.now()
@@ -371,6 +374,8 @@ class RockApp(RockBlockProtocol):
     ##
     # CONNECTION
     ##
+
+    # TODO: fix connection callbacks
     def rockBlockConnected(self):
         self.w_header.addstr(0, self.center(
             self.device, self.full_width), self.device, self.cyan)

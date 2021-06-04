@@ -168,6 +168,7 @@ class RockBlock(object):
         self.callback.status("Message RX started...",
                              RockBlockProtocol.STATUS_INFO)
         if self.connectionOk():
+            # TODO: check for ring alert before attempting session
             self._perform_session()
 
     def sendMessage(self, msg):
@@ -288,15 +289,20 @@ class RockBlock(object):
         return response
 
     def checkStatus(self):
+        self._verify_serial_connected()
+        self.requestSignalStrength()
         self.send_command("AT+SBDSX")
         response = self.expect("+SBDSX: ")
-        r = []
-        if response != None:
-            r = response.split(", ")
-        # 0 <MO flag>, 1 <MOMSN>, 2 <MT flag>, 3 <MTMSN>, 4 <RA flag>, 5 <msg waiting>
         self.expect("OK")
-        self.callback.status("Status: moflg={} mtflg={} ring={} msg wait={}".format(
-            r[0], r[2], r[4], r[5]), RockBlockProtocol.STATUS_INFO)
+        if response != None:
+            # 0 <MO flag>, 1 <MOMSN>, 2 <MT flag>, 3 <MTMSN>, 4 <RA flag>, 5 <msg waiting>
+            # 0, 6, 0, -1, 0, 0
+            mo_flg, mo_msn, mt_flag, mt_msn, ring_alert, msg_wait = response.split(", ")
+            self.callback.status("Status: moflg={} mtflg={} ring={} msg wait={}".format(
+                mo_flg, mt_flag, ring_alert, msg_wait), RockBlockProtocol.STATUS_INFO)
+            if ring_alert == '1':
+                self._perform_session()
+
         return
 
     def _queueMessage(self, msg):
