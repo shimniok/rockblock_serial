@@ -257,6 +257,10 @@ class RockApp(RockBlockProtocol):
                         self.print_status("MO buffer clear", self.white)
                     else:
                         self.print_status("MO buffer clear fail", self.red)
+                    if rb._clearMtBuffer():
+                        self.print_status("MT buffer clear", self.white)
+                    else:
+                        self.print_status("MT buffer clear fail", self.red)
                 elif c == "c": # check status
                     rb.checkStatus()
                 elif c == "m": # send message
@@ -283,7 +287,6 @@ class RockApp(RockBlockProtocol):
                 # Timing intervals
                 elapsed_time = datetime.now() - previous_time
                 if elapsed_time.seconds > polling_interval:
-                    rb.requestSignalStrength()
                     rb.checkStatus()
                     previous_time = datetime.now()
             
@@ -328,8 +331,6 @@ class RockApp(RockBlockProtocol):
             self.log.log_message(their_msg)
             self.w_message.addstr(their_msg, self.green)
             self.w_message.refresh()
-
-            #TODO: log message
 
     def rockBlockRxMessageQueue(self, count):
         self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))

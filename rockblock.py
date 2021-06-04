@@ -180,15 +180,16 @@ class RockBlock(object):
     def sendMessage(self, msg):
         self.callback.status("Message TX started...",
                              RockBlockProtocol.STATUS_INFO)
-        if not self.connectionOk():
-            return False
+        #if not self.connectionOk():
+        #    return False
 
         if not self._queueMessage(msg):
             self.callback.status("queue message failed",
                                  RockBlockProtocol.STATUS_ERROR)
             return False
 
-        return self._perform_session()
+        return True
+#        return self._perform_session()
 
     def connectionOk(self):
         self._verify_serial_connected()
@@ -200,11 +201,12 @@ class RockBlock(object):
             return False
 
         # Check signal strength
-        signal = self.requestSignalStrength()
-        if not signal > 0:
-            self.callback.status("no signal", RockBlockProtocol.STATUS_ERROR)
-            return False
-        else:
+        # signal = self.requestSignalStrength()
+        # if not signal > 0:
+        #     self.callback.status("no signal", RockBlockProtocol.STATUS_ERROR)
+        #     return False
+        # else:
+        #     return True
             return True
 
     def _isNetworkTimeValid(self):
@@ -303,12 +305,13 @@ class RockBlock(object):
         if response != None:
             # 0 <MO flag>, 1 <MOMSN>, 2 <MT flag>, 3 <MTMSN>, 4 <RA flag>, 5 <msg waiting>
             # 0, 6, 0, -1, 0, 0
-            mo_flg, mo_msn, mt_flag, mt_msn, ring_alert, msg_wait = response.split(", ")
+            mo_flag, mo_msn, mt_flag, mt_msn, ring_alert, msg_wait = response.split(", ")
             self.callback.status("Status: moflg={} mtflg={} ring={} msg wait={}".format(
-                mo_flg, mt_flag, ring_alert, msg_wait), RockBlockProtocol.STATUS_INFO)
-            if ring_alert == '1':
+                mo_flag, mt_flag, ring_alert, msg_wait), RockBlockProtocol.STATUS_INFO)
+            if mt_flag == '1':
+                self._read_mt_message()
+            if ring_alert == '1' or mo_flag == '1':
                 self._perform_session()
-
         return
 
     def _queueMessage(self, msg):
@@ -417,6 +420,7 @@ class RockBlock(object):
             if mysum != cksum:
                 self.callback.status("checksum mismatch {:d} {:d}".format(
                     mysum, cksum), RockBlockProtocol.STATUS_ERROR)
+            self._clearMtBuffer()
             return msg.decode('utf-8')
 
         return None
@@ -426,6 +430,21 @@ class RockBlock(object):
         self.callback.status("clearing MO buffer",
                              RockBlockProtocol.STATUS_INFO)
         self.send_command("AT+SBDD0")
+        r1 = self.expect("0")
+        self.serial_readline()  # BLANK
+        self.serial_readline()  # OK
+        if r1 == None:
+            self.callback.status("clear buffer: {} expected 0".format(
+                r1), RockBlockProtocol.STATUS_ERROR)
+            return False
+        else:
+            return True
+
+    def _clearMtBuffer(self):
+        self._verify_serial_connected()
+        self.callback.status("clearing MT buffer",
+                             RockBlockProtocol.STATUS_INFO)
+        self.send_command("AT+SBDD1")
         r1 = self.expect("0")
         self.serial_readline()  # BLANK
         self.serial_readline()  # OK
