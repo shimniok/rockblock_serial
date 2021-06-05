@@ -531,4 +531,9 @@ class RockBlock(object):
     }
 
     def mo_status_to_string(self, err):
-        return self.mo_status_codes[err]
+        try:
+            message = self.mo_status_codes.get("{}".format(err))
+            return message
+        except Exception as ex:
+            self.callback.status("key error {}".format(ex), RockBlockProtocol.STATUS_ERROR)
+        return None

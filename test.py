@@ -25,10 +25,13 @@ class RockBlockTest(RockBlockProtocol):
         print("=== Ping")
         rb.ping()
         
-        if rb._queueMessage(b"hello"):
-            print("success")
-        else:
-            print("failure")
+        # if rb._queueMessage(b"hello"):
+        #     print("success")
+        # else:
+        #     print("failure")
+
+        # print("{}".format(rb.mo_status_to_string(32)))
+        # print("{}".format(rb.mo_status_to_string("18")))
 
         # print("=== Disable ring alerts")
         # rb._disableRingAlerts()
