@@ -23,7 +23,7 @@ class EventLog:
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d %I:%M:%S")
         if self.filename:
             with open(self.filename, "a") as f:
-                f.write("{} {}".format(timestamp, text))
+                f.write("{} {}\n".format(timestamp, text))
                 f.close()
         else:
             print("{} {}".format(timestamp, text))
