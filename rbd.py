@@ -24,7 +24,7 @@ class RockBlockDaemon(RockBlockProtocol):
         return
 
     def process_serial(self, text):
-        self.log.debug(": {}".format(text))
+        self.log.debug(" > {}".format(text))
         return
 
     def on_receive(self, text):
