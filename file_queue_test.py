@@ -54,9 +54,10 @@ def test_filter(queue):
         os.remove("{d}/{f}".format(d=q_dir, f=f))
 
 def test_enqueue_dequeue(queue):
-    # text = "testing"
-    # queue.enqueue_message(text)
-    # m = queue.dequeue_message()
-    # assert m == text
-
-    assert 1 == 1
+    text = "testing"
+    queue.enqueue_message(text)
+    assert len(queue.get_messages()) == 1
+    
+    m = queue.dequeue_message()
+    assert m == text
+    assert len(queue.get_messages()) == 0
