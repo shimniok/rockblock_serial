@@ -1,4 +1,5 @@
 from datetime import datetime
+from pathlib import Path
 
 class EventLog:
 
@@ -11,6 +12,8 @@ class EventLog:
     def __init__(self, filename=None, level=INFO):
         self.filename = filename
         self.set_level(level)
+        if filename:
+            Path(filename).touch()
 
     def set_level(self, level):
         if level >= self.SILENT and level <= self.DEBUG:
@@ -18,6 +21,9 @@ class EventLog:
         else:
             raise ValueError("invalid level")
         return
+    
+    def get_level(self):
+        return self.level
 
     def _log(self, text):
         timestamp = datetime.strftime(datetime.now(), "%Y-%m-%d %I:%M:%S")
