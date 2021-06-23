@@ -1,8 +1,16 @@
 appdirs==1.4.4
+attrs==21.2.0
 autopep8==1.5.7
 future==0.18.2
+importlib-metadata==4.5.0
+iniconfig==1.1.1
 iso8601==0.1.14
+packaging==20.9
+pluggy==0.13.1
 pycodestyle==2.7.0
+pyparsing==2.4.7
 pyserial==3.5
+pytest==6.2.4
 PyYAML==5.4.1
 toml==0.10.2
+zipp==3.4.1
