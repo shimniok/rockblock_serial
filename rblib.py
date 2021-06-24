@@ -88,10 +88,27 @@ class RockBlockPortException(RockBlockException):
 
 
 class RockBlockStatus(object):
-    def __init__(self, mo_flag=0, mt_flag=0, ring=0):
+    ''' Represents Rockblock status (from SBDSX) '''
+
+    def __init__(self, mo_flag=0, mo_msn=-1, mt_flag=0, mt_msn=-1, ring=0, waiting=0):
         self.mo_flag = mo_flag
+        self.mo_msn = mo_msn
         self.mt_flag = mt_flag
+        self.mt_msn = mt_msn
         self.ring = ring
+        self.waiting = waiting
+
+
+class RockBlockSessionStatus(object):
+    ''' Represents the status of a RockBlock session '''
+
+    def __init__(self, mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued):
+        self.mo_status = mo_status
+        self.mo_msn = mo_msn
+        self.mt_status = mt_status
+        self.mt_msn = mt_msn
+        self.mt_length = mt_length
+        self.mt_queued = mt_queued
 
 
 class RockBlock(object):
@@ -310,10 +327,13 @@ class RockBlock(object):
             # 0 <MO flag>, 1 <MOMSN>, 2 <MT flag>, 3 <MTMSN>, 4 <RA flag>, 5 <msg waiting>
             # 0, 6, 0, -1, 0, 0
             mo_fl, mo_msn, mt_fl, mt_msn, ring, msg_w = response.split(", ")
-            return RockBlockStatus(mo_flag=self.b2i(mo_fl),
-                                   mt_flag=self.b2i(mt_fl),
-                                   ring=self.b2i(ring))
-
+            #print("mo_msn={} mt_msn={} msg_wait={}".format(mo_msn, mt_msn, msg_w))
+            return RockBlockStatus(mo_flag=int(mo_fl),
+                                   mo_msn=int(mo_msn),
+                                   mt_flag=int(mt_fl),
+                                   mt_msn=int(mt_msn),
+                                   ring=int(ring),
+                                   waiting=int(msg_w))
         else:
             return RockBlockStatus()
 
