@@ -4,7 +4,7 @@ from datetime import datetime
 from event_logging import EventLog
 from serial.serialutil import SerialException
 from rblib import RockBlock, RockBlockProtocol
-from queue import FileQueue
+from file_queue import FileQueue
 from event_logging import EventLog
 
 
