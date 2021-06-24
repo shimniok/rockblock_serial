@@ -112,14 +112,14 @@ class RockBlockDaemon(RockBlockProtocol):
                     self.on_error("session error: mo_status={} mt_status={}".format(
                         status.mo_status, status.mt_status))
 
-            except SerialException as e:
-                self.log.error("serial: {}".format(e))
-                # TODO: automatic reconnect
-                pass
+        except SerialException as e:
+            self.log.error("serial: {}".format(e))
+            # TODO: automatic reconnect
+            pass
 
-            except Exception as e:
-                self.log.error(e)
-                pass
+        except Exception as e:
+            self.log.error(e)
+            pass
 
     def run(self):
         self.log.debug("polling loop begin")
