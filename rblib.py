@@ -314,12 +314,9 @@ class RockBlock(object):
         self.callback.imei_event(RockBlockEvent(response, response != None))
         return response
 
-    def b2i(self, bytes):
-        return int(bytes.encode('utf-8'))
-
     def get_status(self):
         self._verify_serial_connected()
-        #self.get_signal_strength()
+        # self.get_signal_strength()
         self.send_command("AT+SBDSX")
         response = self.expect("+SBDSX: ")
         self.expect("OK")
