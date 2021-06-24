@@ -62,36 +62,36 @@ class RockBlockDaemon(RockBlockProtocol):
         return
 
     def _send_and_receive(self):
-            try:
-                self.log.debug("get signal strength")
-                signal = self.rb.get_signal_strength()
-                self.on_signal(signal)
+        try:
+            self.log.debug("get signal strength")
+            signal = self.rb.get_signal_strength()
+            self.on_signal(signal)
 
             # any incoming or outgoing messages?
-                self.log.debug("get status")
-                status = self.rb.get_status()
-                self.on_status(status)
+            self.log.debug("get status")
+            status = self.rb.get_status()
+            self.on_status(status)
 
             # incoming message in buffer
-                if status.mt_flag > 0:
-                    self.log.debug("reading mt buffer")
-                    msg = self.rb.read_mt_buffer()
-                    if msg:
-                        self.on_receive(msg)
-                        self.rb.clear_mt_buffer()
+            if status.mt_flag > 0:
+                self.log.debug("reading mt buffer")
+                msg = self.rb.read_mt_buffer()
+                if msg:
+                    self.on_receive(msg)
+                    self.rb.clear_mt_buffer()
 
             # no outgoing messages, check queue
-                if status.mo_flag == 0:
-                    self.log.debug("check queue")
-                    msg = self.q.dequeue_message()
-                    if msg:
-                        self.log.debug("writing mo buffer")
-                        self.rb.write_mo_buffer(msg)
-                        status.mo_flag = 1
+            if status.mo_flag == 0:
+                self.log.debug("check queue")
+                msg = self.q.dequeue_message()
+                if msg:
+                    self.log.debug("writing mo buffer")
+                    self.rb.write_mo_buffer(msg)
+                    status.mo_flag = 1
 
             # perform session if incoming and/or outgoing message present
-                if status.mo_flag == 1 or status.ring == 1:
-                    self.log.debug("performing session")
+            if status.mo_flag == 1 or status.ring == 1:
+                self.log.debug("performing session")
                 status = self.rb.perform_session()
 
                 # MO message successfully sent to the GSS.
