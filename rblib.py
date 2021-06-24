@@ -387,35 +387,45 @@ class RockBlock(object):
                                  RockBlockProtocol.STATUS_ERROR)
             return False
 
-        parts = response.split(",")
-        moStatus = int(parts[0])
-        moMsn = int(parts[1])
-        mtStatus = int(parts[2])
-        mtMsn = int(parts[3])
-        mtLength = int(parts[4])
-        mtQueued = int(parts[5])
+        mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued = response.split(
+            ",")
 
-        self.callback.rockBlockSession(
-            moStatus, moMsn, mtStatus, mtMsn, mtLength, mtQueued)
+        return RockBlockSessionStatus(
+            int(mo_status),
+            int(mo_msn),
+            int(mt_status),
+            int(mt_msn),
+            int(mt_length),
+            int(mt_queued))
 
-        # Mobile Originated
-        if moStatus <= 4:
-            self.clear_mo_buffer()
+        # mo_status = int(parts[0])
+        # mo_msn = int(parts[1])
+        # mt_status = int(parts[2])
+        # mt_msn = int(parts[3])
+        # mt_length = int(parts[4])
+        # mt_queued = int(parts[5])
 
-        if mtStatus == 1 and mtLength > 0:
-            # SBD message successfully received from the GSS.
-            msg = self.read_mt_buffer()
-            self.callback.rockBlockRxReceived(mtMsn, msg)
-        # TODO: handle mtStatus error values
+        # self.callback.rockBlockSession(
+        #     mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued)
 
-        if moStatus <= 4:
-            self.callback.status("session succeeded",
-                                 RockBlockProtocol.STATUS_SUCCESS)
-            return True
-        else:
-            self.callback.status(
-                "session failed: ".format(self.mo_status_to_string(moStatus)), RockBlockProtocol.STATUS_ERROR)
-            return False
+        # # Mobile Originated
+        # if mo_status <= 4:
+        #     self.clear_mo_buffer()
+
+        # if mt_status == 1 and mt_length > 0:
+        #     # SBD message successfully received from the GSS.
+        #     msg = self.read_mt_buffer()
+        #     self.callback.rockBlockRxReceived(mt_msn, msg)
+        # # TODO: handle mtStatus error values
+
+        # if mo_status <= 4:
+        #     self.callback.status("session succeeded",
+        #                          RockBlockProtocol.STATUS_SUCCESS)
+        #     return True
+        # else:
+        #     self.callback.status(
+        #         "session failed: ".format(self.mo_status_to_string(mo_status)), RockBlockProtocol.STATUS_ERROR)
+        #     return False
 
     def read_mt_buffer(self):
         self._verify_serial_connected()

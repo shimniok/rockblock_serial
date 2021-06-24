@@ -61,15 +61,18 @@ class RockBlockDaemon(RockBlockProtocol):
         self.log.error(text)
         return
 
+    def _send_and_receive(self):
             try:
                 self.log.debug("get signal strength")
                 signal = self.rb.get_signal_strength()
                 self.on_signal(signal)
 
+            # any incoming or outgoing messages?
                 self.log.debug("get status")
                 status = self.rb.get_status()
                 self.on_status(status)
 
+            # incoming message in buffer
                 if status.mt_flag > 0:
                     self.log.debug("reading mt buffer")
                     msg = self.rb.read_mt_buffer()
@@ -77,6 +80,7 @@ class RockBlockDaemon(RockBlockProtocol):
                         self.on_receive(msg)
                         self.rb.clear_mt_buffer()
 
+            # no outgoing messages, check queue
                 if status.mo_flag == 0:
                     self.log.debug("check queue")
                     msg = self.q.dequeue_message()
@@ -85,12 +89,28 @@ class RockBlockDaemon(RockBlockProtocol):
                         self.rb.write_mo_buffer(msg)
                         status.mo_flag = 1
 
+            # perform session if incoming and/or outgoing message present
                 if status.mo_flag == 1 or status.ring == 1:
                     self.log.debug("performing session")
-                    if self.rb.perform_session():
-                        self.rb.clear_mo_buffer()
+                status = self.rb.perform_session()
 
-                self.log.debug("sleeping")
+                # MO message successfully sent to the GSS.
+                if status.mo_status <= 4:
+                    self.on_sent(msg) # msg should retain the most recently dequeued message
+                    self.clear_mo_buffer()
+
+                # MT message successfully received from the GSS.
+                if status.mt_status == 1 and status.mt_length > 0:
+                    text = self.read_mt_buffer()
+                    if text:
+                        self.on_receive(text)
+                        self.rb.clear_mt_buffer()
+                    # TODO: handle error
+                # TODO: handle mtStatus error values
+
+                if status.mo_status > 4 or status.mt_status > 4:
+                    self.on_error("session error: mo_status={} mt_status={}".format(
+                        status.mo_status, status.mt_status))
 
             except SerialException as e:
                 self.log.error("serial: {}".format(e))
@@ -101,6 +121,11 @@ class RockBlockDaemon(RockBlockProtocol):
                 self.log.error(e)
                 pass
 
+    def run(self):
+        self.log.debug("polling loop begin")
+        while True:
+            self._send_and_receive()
+            self.log.debug("sleeping")
             time.sleep(self.polling_interval)
 
 if __name__ == "__main__":
