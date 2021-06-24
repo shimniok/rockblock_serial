@@ -32,7 +32,7 @@ class RockBlockDaemon(RockBlockProtocol):
         self.log.info("received MT message: <{}>".format(text))
         return
 
-    def on_send(self, text):
+    def on_sent(self, text):
         ''' Called when client requests to send MO message '''
         self.log.info("sent MO message: <{}>".format(text))
         return
