@@ -48,9 +48,19 @@ class RockBlockDaemon(RockBlockProtocol):
             status.mo_flag, status.mt_flag, status.ring))
         return
 
-    def run(self):
-        self.log.debug("polling loop begin")
-        while True:
+    def on_session_status(self, status):
+        ''' Called when session status available '''
+        self.log.debug("session: mo_flag={} mt_flag={} mt_length={} waiting={}".format(
+            status.mo_flag,
+            status.mt_flag,
+            status.mt_length,
+            status.waiting))
+        return
+
+    def on_error(self, text):
+        self.log.error(text)
+        return
+
             try:
                 self.log.debug("get signal strength")
                 signal = self.rb.get_signal_strength()
