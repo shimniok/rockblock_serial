@@ -1,5 +1,6 @@
-import time
+import os
 import sys
+import time
 from datetime import datetime
 from event_logging import EventLog
 from serial.serialutil import SerialException
@@ -14,7 +15,12 @@ class RockBlockDaemon(RockBlockProtocol):
         self.log = EventLog(level=log_level)
         self.polling_interval = polling_interval
         self.log.info("initialize queue")
-        self.q = FileQueue(queue_dir)
+        if not os.path.exists(queue_dir):
+            os.mkdir(queue_dir)
+        self.outbox = FileQueue(queue_dir+"/outbox")
+        self.inbox = FileQueue(queue_dir+"/inbox")
+        self.sent = FileQueue(queue_dir+"/sent")
+        self.mo_message = None
         try:
             self.log.info("initialize serial")
             self.rb = RockBlock(device, self)
@@ -61,6 +67,15 @@ class RockBlockDaemon(RockBlockProtocol):
         self.log.error(text)
         return
 
+    def _retrieve_mt_message(self):
+        self.log.debug("reading mt buffer")
+        msg = self.rb.read_mt_buffer()
+        if msg:
+            self.on_receive(msg)
+            self.rb.clear_mt_buffer()
+            self.inbox.enqueue_message(msg)
+        return
+
     def _send_and_receive(self):
         try:
             self.log.debug("get signal strength")
@@ -74,19 +89,15 @@ class RockBlockDaemon(RockBlockProtocol):
 
             # incoming message in buffer
             if status.mt_flag > 0:
-                self.log.debug("reading mt buffer")
-                msg = self.rb.read_mt_buffer()
-                if msg:
-                    self.on_receive(msg)
-                    self.rb.clear_mt_buffer()
+                self._retrieve_mt_message()
 
             # no outgoing messages, check queue
             if status.mo_flag == 0:
                 self.log.debug("check queue")
-                msg = self.q.dequeue_message()
-                if msg:
+                self.mo_message = self.outbox.dequeue_message()
+                if self.mo_message:
                     self.log.debug("writing mo buffer")
-                    self.rb.write_mo_buffer(msg)
+                    self.rb.write_mo_buffer(self.mo_message)
                     status.mo_flag = 1
 
             # perform session if incoming and/or outgoing message present
@@ -96,16 +107,13 @@ class RockBlockDaemon(RockBlockProtocol):
 
                 # MO message successfully sent to the GSS.
                 if status.mo_status <= 4:
-                    self.on_sent(msg) # msg should retain the most recently dequeued message
+                    self.inbox.enqueue_message(self.mo_message)
+                    self.on_sent(self.mo_message)
                     self.clear_mo_buffer()
 
                 # MT message successfully received from the GSS.
                 if status.mt_status == 1 and status.mt_length > 0:
-                    text = self.read_mt_buffer()
-                    if text:
-                        self.on_receive(text)
-                        self.rb.clear_mt_buffer()
-                    # TODO: handle error
+                    self._retrieve_mt_message()
                 # TODO: handle mtStatus error values
 
                 if status.mo_status > 4 or status.mt_status > 4:
