@@ -1,7 +1,7 @@
-<h1>hello world</h1>
+<h1>Sat Chat Mobile</h1>
 <hr>
 <!-- messages -->
 <ul>
-  <li *ngFor="let m of messages">{{ m }}</li>
+  <li *ngFor="let m of messages|async">{{ m.message }}</li>
 </ul>
 <hr>
