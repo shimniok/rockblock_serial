@@ -1,8 +1,14 @@
 [
   {
-    "message": "msg1"
+    "message": "msg1",
+    "from": "base"
   },
   {
-    "message": "msg2"
+    "message": "msg2",
+    "from": "mobile"
+  },
+  {
+    "message": "msg3",
+    "from": "base"
   }
 ]
