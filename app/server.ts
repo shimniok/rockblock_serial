@@ -14,14 +14,15 @@ const messages = [
   { "message": "msg1" }
 ]; // this will become data store
 
-app.post('/receive', function(req, res) {
+app.get('/receive', function(req, res) {
   console.log('receive');
   // add to messages
   // messages.push( ??? )
   io.emit('messages', messages); // broadcast to all clients
+  res.send("received");
 });
 
-app.get('/*', function (req, res) {
+app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, 'angular-build', 'index.html'));
 });
 
