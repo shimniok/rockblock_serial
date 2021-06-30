@@ -1,5 +1,7 @@
 <h1>Sat Chat Mobile</h1>
 <hr>
+<!-- signal -->
+<p>Signal: {{ signal | async }} </p>
 <!-- messages -->
 <ul>
   <li *ngFor="let m of messages|async">{{ m.from }} > {{ m.message }}</li>

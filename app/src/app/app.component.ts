@@ -10,10 +10,11 @@ import { Observable } from 'rxjs';
 })
 export class AppComponent {
   title = 'app';
-  //messages = [ 'msg1', 'msg2', 'msg3'];
   messages: Observable<Message[]>;
+  signal: Observable<number>;
 
   constructor (private messageService: MessageService) {
-    this.messages = messageService.getMessages();
+    this.messages = messageService.messages;
+    this.signal = messageService.signal;
   }
 }

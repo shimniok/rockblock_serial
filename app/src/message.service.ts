@@ -11,21 +11,30 @@ import { Message } from "./message.type";
 })
 export class MessageService {
   private _messages: BehaviorSubject<Message[]> = new BehaviorSubject([]);
-  public readonly messages: Observable<Message[]> = this._messages.asObservable();
+  public readonly messages: Observable<Message[]> =
+    this._messages.asObservable();
+
+  private _signal: BehaviorSubject<number> = new BehaviorSubject(0);
+  public readonly signal: Observable<number> = this._signal.asObservable();
 
   constructor(private http: HttpClient, private socket: Socket) {
+    // subscribe to messages events
     this.socket.fromEvent<Message[]>('messages').subscribe(
-      (result) => this._messages.next(result),
-      (err) => console.log("MessageService: constructor(): error calling api", err)
-    )
+      (res) => this._messages.next(res),
+      (err) =>
+        console.log('MessageService: constructor(): error calling api', err)
+    );
+
+    // subscribe to signal events
+    this.socket.fromEvent<number>('signal').subscribe(
+      (res) => this._signal.next(res),
+      (err) =>
+        console.log('MessageService: constructor(): error calling api', err)
+    );
   }
 
   sendMessage(msg: string) {
     this.socket.emit('send', msg);
   }
 
-  getMessages() {
-    //return this.http.get<Message[]>('/assets/messages.json');
-    return this.messages;
-  }
 }

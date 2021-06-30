@@ -9,15 +9,21 @@ const io = require('socket.io')(http, {
 });
 const path = require('path');
 
-
-const messages = [
+// message data store
+var messages = [
   { "message": "msg1" }
-]; // this will become data store
+];
+var signal = 0;
 
+// API for updating signal strength info
+app.get('/signal', function(req, res) {
+  console.log("signal");
+});
+
+// API for posting a newly-received message
 app.get('/receive', function(req, res) {
   console.log('receive');
-  // add to messages
-  // messages.push( ??? )
+  // add to messages: messages.push( ??? )
   io.emit('messages', messages); // broadcast to all clients
   res.send("received");
 });
@@ -27,42 +33,17 @@ app.get('/', function (req, res) {
 });
 
 io.on('connection', (socket) => {
-  // let previousId;
-  // const safeJoin = (currentId) => {
-  //   socket.leave(previousId);
-  //   socket.join(currentId, () =>
-  //     console.log(`Socket ${socket.id} joined room ${currentId}`)
-  //   );
-  //   previousId = currentId;
-  // };
-
   socket.on('send', (message) => {
     console.log('send');
     // add to message store
     // send to rbdaemon somehow
   });
 
-  // socket.on('getDoc', (docId) => {
-  //   console.log('getDoc');
-  //   safeJoin(docId);
-  //   socket.emit('document', documents[docId]);
-  // });
+  // send current list of messages
+  io.emit('messages', messages);
 
-  // socket.on('addDoc', (doc) => {
-  //   console.log('addDoc');
-  //   documents[doc.id] = doc;
-  //   safeJoin(doc.id);
-  //   io.emit('documents', Object.keys(documents));
-  //   socket.emit('document', doc);
-  // });
-
-  // socket.on('editDoc', (doc) => {
-  //   console.log('editDoc');
-  //   documents[doc.id] = doc;
-  //   socket.to(doc.id).emit('document', doc);
-  // });
-
-  io.emit('messages', Object.keys(messages));
+  // send current signal
+  io.emit('signal', signal);
 
   console.log(`Socket ${socket.id} has connected`);
 });
