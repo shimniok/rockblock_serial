@@ -19,14 +19,13 @@ import time
 import serial
 
 
-class RockBlockEvent(object):
-    def __init__(self, value, status):
-        self.value = value
-        self.status = status
+# class RockBlockEvent(object):
+#     def __init__(self, value, status):
+#         self.value = value
+#         self.status = status
 
 
 class RockBlockProtocol(object):
-
     STATUS_INFO = 0
     STATUS_SUCCESS = 1
     STATUS_ERROR = 2
@@ -37,53 +36,25 @@ class RockBlockProtocol(object):
     # STATUS
     def status(self, message, status): pass
 
-    # CONNECTION
-    def rockBlockConnected(self): pass
-    def rockBlockDisconnected(self): pass
-
-    # NETWORK TIME
-    def rockBlockNetworkTime(self, event): pass
-
-    # IMEI
-    def imei_event(self, event): pass
-
-    # SIGNAL
-    def signal_event(self, event): pass
-
-    # SESSION
-    def rockBlockSession(self, mo_status, mo_msn, mt_status,
-                         mt_msn, mt_length, mt_queued): pass
-
-    # MT
-    def rockBlockRxStarted(self): pass
-    def rockBlockRxFailed(self): pass
-    def rockBlockRxReceived(self, mtmsn, data): pass
-    def rockBlockRxMessageQueue(self, count): pass
-
-    # MO
-    def rockBlockTxStarted(self): pass
-    def rockBlockTxFailed(self): pass
-    def rockBlockTxSuccess(self, momsn): pass
-
 
 class RockBlockException(Exception):
     def __init__(self, msg=None):
         if msg is None:
-            msg = "General Error"
+            msg = "RockBlock General Error"
         super(RockBlockException, self).__init__(msg)
 
 
 class RockBlockSerialException(RockBlockException):
     def __init__(self, msg=None):
         if msg is None:
-            msg = "Serial Error"
+            msg = "RockBlock Serial Error"
         super(RockBlockSerialException, self).__init__(msg)
 
 
 class RockBlockPortException(RockBlockException):
     def __init__(self, msg=None):
         if msg is None:
-            msg = "Port Config Error"
+            msg = "RockBlock Port Config Error"
         super(RockBlockPortException, self).__init__(msg)
 
 
@@ -123,20 +94,16 @@ class RockBlock(object):
 
         # try:
         self.s = serial.Serial(self.portId, 19200, timeout=5)
-        if (self.disable_echo()
-                and self.disable_flow_control
-                and self.disable_ring_alerts()):
-            self.callback.rockBlockConnected()
-        else:
-            self.close()
+        if not (self.disable_echo() and self.disable_flow_control and self.disable_ring_alerts()):
+            self.close_serial()
             raise RockBlockPortException
 
     ##
     # Serial Specific
     ##
 
-    def close(self):
-        if self.s != None:
+    def close_serial(self):
+        if self.s and self.s.is_open:
             self.s.close()
             self.s = None
 
@@ -302,7 +269,7 @@ class RockBlock(object):
                                  RockBlockProtocol.STATUS_SUCCESS)
             utc = int(response, 16)
             utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
-            self.callback.rockBlockNetworkTime(RockBlockEvent(utc, True))
+            # self.callback.rockBlockNetworkTime(RockBlockEvent(utc, True))
         return utc
 
     def get_imei(self):
@@ -311,7 +278,7 @@ class RockBlock(object):
         self.serial_readline()
         response = self.serial_readline().decode('utf-8')
         self.expect("OK")
-        self.callback.imei_event(RockBlockEvent(response, response != None))
+        # self.callback.imei_event(RockBlockEvent(response, response != None))
         return response
 
     def get_status(self):
