@@ -1,6 +1,9 @@
-# interface class for RockBlockDaemon events
-class RBDEvents(object):
+from rblib import RockBlockEventHandler
 
+# interface class for RockBlockDaemon events
+class RBDEventHandler(RockBlockEventHandler):
+    ''' event handler for RockBlockDaemon, inherits from RockBlockEventHandler '''
+    
     # Called when client requests to send MO message
     def on_send(self, text): pass
 
@@ -11,7 +14,7 @@ class RBDEvents(object):
     def on_signal(self, signal): pass
 
     # Called when new status available
-    def on_status(self, status): pass
+    #def on_status(self, status): pass
 
     # Called when session status available 
     def on_session_status(self, status): pass
@@ -20,4 +23,4 @@ class RBDEvents(object):
     def on_error(self, text): pass
 
     # process serial bytes that are sent/received to/from RockBlock
-    def process_serial(self, text): pass
+    #def process_serial(self, text): pass

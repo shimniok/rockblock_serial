@@ -1,8 +1,6 @@
 import os
-from rbd_events import RBDEventHandler
 import sys
 import time
-from datetime import datetime
 from event_logging import EventLog
 from serial.serialutil import SerialException
 from rblib import RockBlock
