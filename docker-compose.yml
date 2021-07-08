@@ -13,37 +13,37 @@ services:
       - "5672:5672"
       - "15672:15672"
     networks:
-      mynet:
+      rbd_mynet:
         aliases:
           - rabbitmq
     restart: always
     volumes:
       - ./rabbitmq/config/:/etc/rabbitmq/:rw
 
-  rabbit-producer:
-    hostname: rabbit-producer
-    container_name: rabbit-producer
-    depends_on:
-      - rabbitmq
-    build: ./producer/
-    ports:
-      - "3000:3000"
-    networks:
-      - mynet
-    environment:
-      AMQP_HOST: rabbitmq
-      INBOX: inbox
-      OUTBOX: outbox
-    restart: always
+  # rabbit-producer:
+  #   hostname: rabbit-producer
+  #   container_name: rabbit-producer
+  #   depends_on:
+  #     - rabbitmq
+  #   build: ./producer/
+  #   ports:
+  #     - "3000:3000"
+  #   networks:
+  #     - mynet
+  #   environment:
+  #     AMQP_HOST: rabbitmq
+  #     INBOX: inbox
+  #     OUTBOX: outbox
+  #   restart: always
 
-  rabbit-consumer:
-    hostname: rabbit-consumer
-    container_name: rabbit-consumer
+  rockblock-daemon:
+    hostname: rbd
+    container_name: rbd
     depends_on:
       - rabbitmq
-    build: ./consumer/
+    build: ./
     networks:
-      - mynet
+      - rbd_mynet
     environment:
       AMQP_HOST: rabbitmq
       INBOX: inbox
