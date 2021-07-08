@@ -1,17 +1,17 @@
 import os
-from rbd_events import RBDEvents
+from rbd_events import RBDEventHandler
 import sys
 import time
 from datetime import datetime
 from event_logging import EventLog
 from serial.serialutil import SerialException
-from rblib import RockBlock, RockBlockProtocol
+from rblib import RockBlock
 from file_queue import FileQueue
 from event_logging import EventLog
-from rbd_events import RBDEvents
+from rbd_events import RBDEventHandler
 
 
-class RockBlockDaemon(RockBlockProtocol):
+class RockBlockDaemon(RBDEventHandler):
 
     def __init__(self, device, queue_dir, polling_interval=5, log_level=EventLog.DEBUG, callback=None):
         self.log = EventLog(level=log_level)

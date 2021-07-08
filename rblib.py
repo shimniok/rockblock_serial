@@ -12,29 +12,19 @@
 #    See the License for the specific language governing permissions and
 #    limitations under the License.
 
-import glob
-import signal
-import sys
-import time
 import serial
 
 
-# class RockBlockEvent(object):
-#     def __init__(self, value, status):
-#         self.value = value
-#         self.status = status
-
-
-class RockBlockProtocol(object):
+class RockBlockEventHandler(object):
     STATUS_INFO = 0
     STATUS_SUCCESS = 1
     STATUS_ERROR = 2
 
     # RAW OUTPUT
-    def process_serial(self, text): pass
+    def on_serial(self, text): pass
 
     # STATUS
-    def status(self, message, status): pass
+    def on_status(self, message, status): pass
 
 
 class RockBlockException(Exception):
@@ -107,24 +97,6 @@ class RockBlock(object):
             self.s.close()
             self.s = None
 
-    # @staticmethod
-    # def listPorts():
-    #     if sys.platform.startswith('win'):
-    #         ports = ['COM' + str(i + 1) for i in range(256)]
-    #     elif sys.platform.startswith('linux') or sys.platform.startswith('cygwin'):
-    #         ports = glob.glob('/dev/tty[A-Za-z]*')
-    #     elif sys.platform.startswith('darwin'):
-    #         ports = glob.glob('/dev/tty.*')
-    #     result = []
-
-    #     for port in ports:
-    #         try:
-    #             s = serial.Serial(port)
-    #             s.close()
-    #             result.append(port)
-    #         except (OSError, serial.SerialException) as e:
-    #             pass
-    #     return result
 
     def serial_readline(self):
         try:
@@ -168,13 +140,13 @@ class RockBlock(object):
 
     def sendMessage(self, msg):
         self.callback.status("Message TX started...",
-                             RockBlockProtocol.STATUS_INFO)
+                             RockBlockEventHandler.STATUS_INFO)
         # if not self.connectionOk():
         #    return False
 
         if not self.write_mo_buffer(msg):
             self.callback.status("queue message failed",
-                                 RockBlockProtocol.STATUS_ERROR)
+                                 RockBlockEventHandler.STATUS_ERROR)
             return False
 
         return True
@@ -186,7 +158,7 @@ class RockBlock(object):
         # Check valid Network Time
         if not self._isNetworkTimeValid():
             self.callback.status("Invalid network time",
-                                 RockBlockProtocol.STATUS_ERROR)
+                                 RockBlockEventHandler.STATUS_ERROR)
             return False
 
         # Check signal strength
@@ -260,13 +232,13 @@ class RockBlock(object):
         utc = 0
         if response == None:
             self.callback.status("no network time response",
-                                 RockBlockProtocol.STATUS_ERROR)
+                                 RockBlockEventHandler.STATUS_ERROR)
         elif "no network service" in response:
             self.callback.status("no network service",
-                                 RockBlockProtocol.STATUS_ERROR)
+                                 RockBlockEventHandler.STATUS_ERROR)
         else:
             self.callback.status("network time success",
-                                 RockBlockProtocol.STATUS_SUCCESS)
+                                 RockBlockEventHandler.STATUS_SUCCESS)
             utc = int(response, 16)
             utc = int((self.IRIDIUM_EPOCH + (utc * 90))/1000)
             # self.callback.rockBlockNetworkTime(RockBlockEvent(utc, True))
@@ -306,11 +278,11 @@ class RockBlock(object):
 
         if len(msg) > 340:
             self.callback.status(
-                "message must be 340 bytes or less", RockBlockProtocol.STATUS_ERROR)
+                "message must be 340 bytes or less", RockBlockEventHandler.STATUS_ERROR)
             return False
 
         self.callback.status("adding message to buffer",
-                             RockBlockProtocol.STATUS_INFO)
+                             RockBlockEventHandler.STATUS_INFO)
         self.send_command("AT+SBDWB={:d}".format(len(msg)))
         if self.expect("READY") != None:
             checksum = 0
@@ -325,21 +297,21 @@ class RockBlock(object):
             self.serial_readline()  # OK
             if response == None:
                 self.callback.status(
-                    "checksum error", RockBlockProtocol.STATUS_ERROR)
+                    "checksum error", RockBlockEventHandler.STATUS_ERROR)
                 return False
             else:
                 self.callback.status(
-                    "message queued", RockBlockProtocol.STATUS_SUCCESS)
+                    "message queued", RockBlockEventHandler.STATUS_SUCCESS)
             return True
         else:
             self.callback.status("READY message not found",
-                                 RockBlockProtocol.STATUS_ERROR)
+                                 RockBlockEventHandler.STATUS_ERROR)
             return False
 
     def perform_session(self):
         self._verify_serial_connected()
 
-        self.callback.status("session started", RockBlockProtocol.STATUS_INFO)
+        self.callback.status("session started", RockBlockEventHandler.STATUS_INFO)
 
         self.send_command("AT+SBDIX")
         # +SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
@@ -348,7 +320,7 @@ class RockBlock(object):
 
         if response == None:
             self.callback.status("invalid session response",
-                                 RockBlockProtocol.STATUS_ERROR)
+                                 RockBlockEventHandler.STATUS_ERROR)
             return False
 
         mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued = response.split(
@@ -395,7 +367,7 @@ class RockBlock(object):
         self._verify_serial_connected()
 
         self.callback.status("Reading MT message",
-                             RockBlockProtocol.STATUS_INFO)
+                             RockBlockEventHandler.STATUS_INFO)
 
         self.send_command("AT+SBDRB")
         length = int.from_bytes(self.s.read(2), byteorder='big')
@@ -416,7 +388,7 @@ class RockBlock(object):
             # compare checksum
             if mysum != cksum:
                 self.callback.status("checksum mismatch {:d} {:d}".format(
-                    mysum, cksum), RockBlockProtocol.STATUS_ERROR)
+                    mysum, cksum), RockBlockEventHandler.STATUS_ERROR)
             self.clear_mt_buffer()
             return msg.decode('utf-8')
 
@@ -425,14 +397,14 @@ class RockBlock(object):
     def clear_mo_buffer(self):
         self._verify_serial_connected()
         self.callback.status("clearing MO buffer",
-                             RockBlockProtocol.STATUS_INFO)
+                             RockBlockEventHandler.STATUS_INFO)
         self.send_command("AT+SBDD0")
         r1 = self.expect("0")
         self.serial_readline()  # BLANK
         self.serial_readline()  # OK
         if r1 == None:
             self.callback.status("clear buffer: {} expected 0".format(
-                r1), RockBlockProtocol.STATUS_ERROR)
+                r1), RockBlockEventHandler.STATUS_ERROR)
             return False
         else:
             return True
@@ -440,14 +412,14 @@ class RockBlock(object):
     def clear_mt_buffer(self):
         self._verify_serial_connected()
         self.callback.status("clearing MT buffer",
-                             RockBlockProtocol.STATUS_INFO)
+                             RockBlockEventHandler.STATUS_INFO)
         self.send_command("AT+SBDD1")
         r1 = self.expect("0")
         self.serial_readline()  # BLANK
         self.serial_readline()  # OK
         if r1 == None:
             self.callback.status("clear buffer: {} expected 0".format(
-                r1), RockBlockProtocol.STATUS_ERROR)
+                r1), RockBlockEventHandler.STATUS_ERROR)
             return False
         else:
             return True
@@ -533,5 +505,5 @@ class RockBlock(object):
             return message
         except Exception as ex:
             self.callback.status("key error {}".format(
-                ex), RockBlockProtocol.STATUS_ERROR)
+                ex), RockBlockEventHandler.STATUS_ERROR)
         return None
