@@ -6,7 +6,7 @@ networks:
 
 services:
   rabbitmq:
-    container_name: rabbitmq
+    container_name: rbd_rabbitmq
     image: rabbitmq:3-management
     hostname: rabbitmq
     ports:
@@ -15,10 +15,40 @@ services:
     networks:
       rbd_mynet:
         aliases:
-          - rabbitmq
+         - rbd_rabbitmq
     restart: always
     volumes:
       - ./rabbitmq/config/:/etc/rabbitmq/:rw
+      - ./rabbitmq/:/var/log/rabbitmq:rw
+    # environment: 
+    #   - RABBITMQ_DEFAULT_USER=guest
+    #   - RABBITMQ_DEFAULT_PASS=pass
+    entrypoint:
+        - "rabbitmq-server"
+    read_only: false
+
+  rockblock-daemon:
+    hostname: rbd
+    container_name: rbd
+    depends_on:
+      - rabbitmq
+    build: ./rbdaemon
+    networks:
+      - rbd_mynet
+    environment:
+      AMQP_HOST: rabbitmq
+      INBOX: inbox
+      OUTBOX: outbox
+    restart: always
+    devices:
+      - "/dev/ttyUSB0:/dev/ttyUSB0"
+    environment:
+      - AMQP_HOST=rabbitmq
+      - INBOX=inbox
+      - OUTBOX=outbox
+      - USER=guest
+      - PASS=guest
+  
 
   # rabbit-producer:
   #   hostname: rabbit-producer
@@ -35,17 +65,3 @@ services:
   #     INBOX: inbox
   #     OUTBOX: outbox
   #   restart: always
-
-  rockblock-daemon:
-    hostname: rbd
-    container_name: rbd
-    depends_on:
-      - rabbitmq
-    build: ./rbdaemon
-    networks:
-      - rbd_mynet
-    environment:
-      AMQP_HOST: rabbitmq
-      INBOX: inbox
-      OUTBOX: outbox
-    restart: always

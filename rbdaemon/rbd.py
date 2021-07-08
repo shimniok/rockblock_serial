@@ -6,7 +6,7 @@ from serial.serialutil import SerialException
 from rblib import RockBlock
 from file_queue import FileQueue
 from event_logging import EventLog
-from rbd_events import RBDEventHandler
+from rbd_event_handler import RBDEventHandler
 
 
 class RockBlockDaemon(RBDEventHandler):
@@ -39,11 +39,6 @@ class RockBlockDaemon(RBDEventHandler):
         self.log.debug(" > {}".format(text))
         # if self.cb:
         #     self.cb.process_serial(text)
-        return
-
-    def status(self, text):
-        ''' Callback for status '''
-        self.log.debug("status callback: {}".format(text))
         return
 
     def on_receive(self, text):
