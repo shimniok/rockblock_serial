@@ -1,4 +1,5 @@
 import os
+from rbd_events import RBDEvents
 import sys
 import time
 from datetime import datetime
@@ -7,20 +8,26 @@ from serial.serialutil import SerialException
 from rblib import RockBlock, RockBlockProtocol
 from file_queue import FileQueue
 from event_logging import EventLog
+from rbd_events import RBDEvents
 
 
 class RockBlockDaemon(RockBlockProtocol):
 
-    def __init__(self, device, queue_dir, polling_interval=5, log_level=EventLog.DEBUG):
+    def __init__(self, device, queue_dir, polling_interval=5, log_level=EventLog.DEBUG, callback=None):
         self.log = EventLog(level=log_level)
         self.polling_interval = polling_interval
         self.log.info("initialize queue")
         if not os.path.exists(queue_dir):
             os.mkdir(queue_dir)
+
         self.outbox = FileQueue(queue_dir+"/outbox")
         self.inbox = FileQueue(queue_dir+"/inbox")
         self.sent = FileQueue(queue_dir+"/sent")
+
         self.mo_message = None
+
+        self.cb = callback
+
         try:
             self.log.info("initialize serial")
             self.rb = RockBlock(device, self)
@@ -30,12 +37,22 @@ class RockBlockDaemon(RockBlockProtocol):
         return
 
     def process_serial(self, text):
+        ''' Callback for serial text input/output '''
         self.log.debug(" > {}".format(text))
+        # if self.cb:
+        #     self.cb.process_serial(text)
+        return
+
+    def status(self, text):
+        ''' Callback for status '''
+        self.log.debug("status callback: {}".format(text))
         return
 
     def on_receive(self, text):
         ''' Called when a MT message is received '''
         self.log.info("received MT message: <{}>".format(text))
+        # if self.cb:
+        #     self.cb.on_receive(text)
         return
 
     def on_sent(self, text):
@@ -46,12 +63,16 @@ class RockBlockDaemon(RockBlockProtocol):
     def on_signal(self, signal):
         ''' Called when signal strength updated '''
         self.log.debug("signal={}".format(signal))
+        if self.cb:
+            self.cb.on_signal(signal)
         return
 
     def on_status(self, status):
         ''' Called when new status available '''
         self.log.debug("status: mo_flag={} mt_flag={} ring={}".format(
             status.mo_flag, status.mt_flag, status.ring))
+        # if self.cb:
+        #     self.cb.on_status(status)
         return
 
     def on_session_status(self, status):
@@ -61,10 +82,14 @@ class RockBlockDaemon(RockBlockProtocol):
             status.mt_flag,
             status.mt_length,
             status.waiting))
+        # if self.cb:
+        #     self.cb.on_session_status(status)
         return
 
     def on_error(self, text):
         self.log.error(text)
+        # if self.cb:
+        #     self.cb.on_error(text)
         return
 
     def _retrieve_mt_message(self):
@@ -108,13 +133,13 @@ class RockBlockDaemon(RockBlockProtocol):
                 # MO message successfully sent to the GSS.
                 if status.mo_status <= 4:
                     self.inbox.enqueue_message(self.mo_message)
-                    self.on_sent(self.mo_message)
+                    # self.on_sent(self.mo_message)
+                    # self.on_receive(self.mo_message) ?
                     self.clear_mo_buffer()
 
                 # MT message successfully received from the GSS.
                 if status.mt_status == 1 and status.mt_length > 0:
                     self._retrieve_mt_message()
-                # TODO: handle mtStatus error values
 
                 if status.mo_status > 4 or status.mt_status > 4:
                     self.on_error("session error: mo_status={} mt_status={}".format(
@@ -124,17 +149,22 @@ class RockBlockDaemon(RockBlockProtocol):
             self.log.error("serial: {}".format(e))
             # TODO: automatic reconnect
             pass
-
+        
         except Exception as e:
             self.log.error(e)
             pass
 
     def run(self):
         self.log.debug("polling loop begin")
-        while True:
-            self._send_and_receive()
-            self.log.debug("sleeping")
-            time.sleep(self.polling_interval)
+        try:
+            while True:
+                self._send_and_receive()
+                self.log.debug("sleeping")
+                time.sleep(self.polling_interval)
+        except KeyboardInterrupt:
+            self.log.info("interrupt received, exiting")
+            pass
+    
 
 if __name__ == "__main__":
     daemon = RockBlockDaemon("/dev/ttyUSB0", "./q")
