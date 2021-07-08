@@ -1,18 +1,19 @@
 #!/usr/bin/env python3
 
-from rockblock import RockBlock, RockBlockProtocol, RockBlockException
+from rblib import RockBlock, RockBlockEventHandler, RockBlockException
+from serial_helpers import list_ports
 import signal
 import sys
 import threading
 import curses
 import argparse
-from datetime import datetime
+from datetime import datetime, timedelta
 import time
 from curses import wrapper
 import math
 from log import MessageLog
 
-class RockApp(RockBlockProtocol):
+class RockApp(RockBlockEventHandler):
 
     helptxt = "[q]uit [m]sg-send [r]eceive-msg [i]mei [s]ignal [c]heck-status [b]uf-clr"
 
@@ -138,7 +139,7 @@ class RockApp(RockBlockProtocol):
     ##
 
     def select_port(self):
-        port = RockBlock.listPorts()
+        port = list_ports()
 
         title = "Select Serial Port"
         margin = 3
@@ -229,10 +230,9 @@ class RockApp(RockBlockProtocol):
         # TODO: outbox queue, inbox queue, signal queue, ring alert, background processing/thread/queue
 
         rb = RockBlock(self.device, self)
-        rb.connectionOk()
 
         polling_interval = 10
-        previous_time = datetime.now()
+        previous_time = datetime.now() - timedelta(minutes=-1) # force immediate update
 
         while True:
             curses.curs_set(0)
@@ -245,12 +245,12 @@ class RockApp(RockBlockProtocol):
                     rb.close()
                     break
                 elif c == "s": # get signal strength
-                    rb.requestSignalStrength()
+                    self.update_signal(rb.get_signal_strength())
                 elif c == "i": # get IMEI
                     imei = rb.getSerialIdentifier()
                     self.print_status(imei, self.cyan)
                 elif c == "t": # network time
-                    tm = rb.networkTime()
+                    tm = rb.get_net_time()
                     self.print_status(str(tm), self.cyan)
                 elif c == "b": # clear MO buffer
                     if rb._clearMoBuffer():
@@ -262,7 +262,7 @@ class RockApp(RockBlockProtocol):
                     else:
                         self.print_status("MT buffer clear fail", self.red)
                 elif c == "c": # check status
-                    rb.checkStatus()
+                    rb.get_status()
                 elif c == "m": # send message
                     self.w_input.addstr(0, 0, "Message> ")
                     curses.curs_set(1)
@@ -287,7 +287,9 @@ class RockApp(RockBlockProtocol):
                 # Timing intervals
                 elapsed_time = datetime.now() - previous_time
                 if elapsed_time.seconds > polling_interval:
-                    rb.checkStatus()
+                    self.update_signal(rb.get_signal_strength())
+                    rb_status = rb.get_status()
+                    if rb_status.mo_flag == 1
                     previous_time = datetime.now()
             
 
@@ -319,49 +321,45 @@ class RockApp(RockBlockProtocol):
             self.w_raw.refresh()
         return
 
-    def rockBlockRxStarted(self):
-        self.print_status("RX Started", self.white)
+    # def rockBlockRxStarted(self):
+    #     self.print_status("RX Started", self.white)
 
-    def rockBlockRxFailed(self):
-        self.print_status("RX Failed", self.red)
+    # def rockBlockRxFailed(self):
+    #     self.print_status("RX Failed", self.red)
 
-    def rockBlockRxReceived(self, mtmsn, msg):
-        if not msg == None:
-            their_msg = "base> {:s}\n".format(msg)
-            self.log.log_message(their_msg)
-            self.w_message.addstr(their_msg, self.green)
-            self.w_message.refresh()
+    # def rockBlockRxReceived(self, mtmsn, msg):
+    #     if not msg == None:
+    #         their_msg = "base> {:s}\n".format(msg)
+    #         self.log.log_message(their_msg)
+    #         self.w_message.addstr(their_msg, self.green)
+    #         self.w_message.refresh()
 
-    def rockBlockRxMessageQueue(self, count):
-        self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))
-        self.w_header.refresh()
+    # def rockBlockRxMessageQueue(self, count):
+    #     self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))
+    #     self.w_header.refresh()
 
-    def rockBlockTxStarted(self):
-        self.print_status("TX Started", self.white)
+    # def rockBlockTxStarted(self):
+    #     self.print_status("TX Started", self.white)
 
-    def rockBlockTxFailed(self):
-        self.print_status("TX Failed", self.red)
+    # def rockBlockTxFailed(self):
+    #     self.print_status("TX Failed", self.red)
 
-    def rockBlockTxSuccess(self, momsn=0):
-        self.print_status("TX Succeeded", self.green)
-        self.w_message.refresh()
+    # def rockBlockTxSuccess(self, momsn=0):
+    #     self.print_status("TX Succeeded", self.green)
+    #     self.w_message.refresh()
 
-    def rockBlockSession(self, mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued):
-        self.print_status("MO: status={} msn={}\nMT: status={} msn={} len={} q={}".format(
-            mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued), self.white)
+    # def rockBlockSession(self, mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued):
+    #     self.print_status("MO: status={} msn={}\nMT: status={} msn={} len={} q={}".format(
+    #         mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued), self.white)
 
-    ##
-    # SIGNAL
-    ##
-    
-    def rockBlockSignal(self, event):
+    def on_event(self, event):
         if event.status:
             color = self.green
         else:
             color = self.red
         self.print_status("Signal: {}".format(event.value), color)
     
-    def rockBlockSignalUpdate(self, signal):
+    def update_signal(self, signal):
         s = self.generate_signal_str(signal)
         #self.print_status("Signal: {}".format(s), self.white)
         if signal > 0:
