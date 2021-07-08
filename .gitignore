@@ -108,3 +108,4 @@ log
 
 *.cap
 *.txt
+.vscode/settings.json
