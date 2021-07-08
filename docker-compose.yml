@@ -1,0 +1,51 @@
+version: "3.3"
+
+networks:
+  mynet:
+    driver: bridge
+
+services:
+  rabbitmq:
+    container_name: rabbitmq
+    image: rabbitmq:3-management
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    networks:
+      mynet:
+        aliases:
+          - rabbitmq
+    restart: always
+    volumes:
+      - ./rabbitmq/config/:/etc/rabbitmq/:rw
+
+  rabbit-producer:
+    hostname: rabbit-producer
+    container_name: rabbit-producer
+    depends_on:
+      - rabbitmq
+    build: ./producer/
+    ports:
+      - "3000:3000"
+    networks:
+      - mynet
+    environment:
+      AMQP_HOST: rabbitmq
+      INBOX: inbox
+      OUTBOX: outbox
+    restart: always
+
+  rabbit-consumer:
+    hostname: rabbit-consumer
+    container_name: rabbit-consumer
+    depends_on:
+      - rabbitmq
+    build: ./consumer/
+    networks:
+      - mynet
+    environment:
+      AMQP_HOST: rabbitmq
+      INBOX: inbox
+      OUTBOX: outbox
+    restart: always
