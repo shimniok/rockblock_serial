@@ -59,6 +59,16 @@ class RockBlockStatus(object):
         self.ring = ring
         self.waiting = waiting
 
+    def toJSON(self):
+        json = {
+            "mo_flag": self.mo_flag,
+            "mo_msn": self.mo_msn,
+            "mt_flag": self.mt_flag,
+            "mt_msn": self.mt_msn,
+            "ring": self.ring,
+            "waiting": self.waiting
+        }
+        return json
 
 class RockBlockSessionStatus(object):
     ''' Represents the status of a RockBlock session '''

@@ -11,8 +11,9 @@ outbox = os.environ.get('OUTBOX')
 
 
 def on_inbox(channel, method, properties, body):
-    print("channel: {} routing_key: {} body: {}".format(
-        channel, method.routing_key, body
+    message = body.decode('utf-8')
+    print("routing_key:<{}> body:<{}>".format(
+        method.routing_key, message
     ))
     return
 

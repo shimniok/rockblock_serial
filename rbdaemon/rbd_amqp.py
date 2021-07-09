@@ -6,6 +6,7 @@ import threading
 import time
 import pika
 import rblib
+import json
 
 HOST = os.environ.get('AMQP_HOST')
 INBOX = os.environ.get('INBOX')
@@ -95,7 +96,7 @@ class InboxProducer(rblib.RockBlockEventHandler, RabbitClient):
 
     def on_receive(self, text):
         ''' Called when a MT message is received '''
-        #self.publish('mt_recv', text)
+        self.publish('mt_recv', text)
         return
 
     def on_signal(self, signal):
@@ -105,11 +106,12 @@ class InboxProducer(rblib.RockBlockEventHandler, RabbitClient):
 
     def on_status(self, status):
         ''' Called when new status available'''
-        #self.publish('status', status)
+        self.publish('status', json.dumps(status.toJSON()))
         return
 
     def on_session_status(self, status):
         ''' Called when session status available '''
+        self.publish('session_status', status)
         return
 
     def on_error(self, text):
@@ -127,7 +129,8 @@ class InboxProducer(rblib.RockBlockEventHandler, RabbitClient):
             self.connect_channel(INBOX)
             print("{}: attempting to bind {} to {}".format(self.name, INBOX, EXCHANGE))
             self.channel.exchange_declare(EXCHANGE, durable=True)
-            self.channel.queue_bind(exchange=EXCHANGE, queue=INBOX, routing_key='signal')
+            for key in ['signal', 'status', 'session_status', 'mt_recv']:
+                self.channel.queue_bind(exchange=EXCHANGE, queue=INBOX, routing_key=key)
         except Exception as e:
             print("{}: connection error: {}".format(self.name, e))
             time.sleep(5)

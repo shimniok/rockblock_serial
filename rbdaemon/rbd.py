@@ -44,8 +44,8 @@ class RockBlockDaemon(RBDEventHandler):
     def on_receive(self, text):
         ''' Called when a MT message is received '''
         self.log.info("received MT message: <{}>".format(text))
-        # if self.cb:
-        #     self.cb.on_receive(text)
+        if self.cb:
+            self.cb.on_receive(text)
         return
 
     def on_sent(self, text):
@@ -64,8 +64,8 @@ class RockBlockDaemon(RBDEventHandler):
         ''' Called when new status available '''
         self.log.debug("status: mo_flag={} mt_flag={} ring={}".format(
             status.mo_flag, status.mt_flag, status.ring))
-        # if self.cb:
-        #     self.cb.on_status(status)
+        if self.cb:
+            self.cb.on_status(status)
         return
 
     def on_session_status(self, status):
@@ -75,8 +75,8 @@ class RockBlockDaemon(RBDEventHandler):
             status.mt_flag,
             status.mt_length,
             status.waiting))
-        # if self.cb:
-        #     self.cb.on_session_status(status)
+        if self.cb:
+            self.cb.on_session_status(status)
         return
 
     def on_error(self, text):
