@@ -111,7 +111,7 @@ class RockBlock(object):
     def serial_readline(self):
         try:
             text = self.s.readline().strip()
-            self.callback.process_serial(text.decode('utf-8'))
+            self.callback.on_serial(text.decode('utf-8'))
         except OSError as e:
             raise RockBlockSerialException(msg=e.strerror)
         return text
@@ -123,7 +123,7 @@ class RockBlock(object):
     def send_command(self, command):
         try:
             self.s.write(command.encode('utf-8') + b'\r')
-            self.callback.process_serial(command)
+            self.callback.on_serial(command)
         except OSError as e:
             raise RockBlockSerialException(msg=e.strerror)
 

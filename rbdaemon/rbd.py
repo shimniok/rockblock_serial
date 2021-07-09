@@ -34,11 +34,11 @@ class RockBlockDaemon(RBDEventHandler):
             sys.exit(1)
         return
 
-    def process_serial(self, text):
+    def on_serial(self, text):
         ''' Callback for serial text input/output '''
         self.log.debug(" > {}".format(text))
-        # if self.cb:
-        #     self.cb.process_serial(text)
+        #if self.cb:
+        #    self.cb.on_serial(text)
         return
 
     def on_receive(self, text):
@@ -81,8 +81,8 @@ class RockBlockDaemon(RBDEventHandler):
 
     def on_error(self, text):
         self.log.error(text)
-        # if self.cb:
-        #     self.cb.on_error(text)
+        if self.cb:
+            self.cb.on_error(text)
         return
 
     def _retrieve_mt_message(self):

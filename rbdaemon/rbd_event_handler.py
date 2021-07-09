@@ -23,4 +23,4 @@ class RBDEventHandler(RockBlockEventHandler):
     def on_error(self, text): pass
 
     # process serial bytes that are sent/received to/from RockBlock
-    #def process_serial(self, text): pass
+    #def on_serial(self, text): pass
