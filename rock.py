@@ -1,17 +1,12 @@
 #!/usr/bin/env python3
 
-from rblib import RockBlock, RockBlockEventHandler, RockBlockException
+from rbdaemon.rblib import RockBlock, RockBlockEventHandler, RockBlockException
 from serial_helpers import list_ports
-import signal
-import sys
-import threading
 import curses
-import argparse
 from datetime import datetime, timedelta
-import time
 from curses import wrapper
-import math
 from log import MessageLog
+
 
 class RockApp(RockBlockEventHandler):
 
@@ -33,7 +28,7 @@ class RockApp(RockBlockEventHandler):
         self.signal = 0
         self.scr = stdscr
         self.window_init()
-        self.event_loop()        
+        self.event_loop()
 
     ##
     # INITIALIZE WINDOWS
@@ -87,50 +82,54 @@ class RockApp(RockBlockEventHandler):
         row4_y = row3_y + row3_height    # status / raw windows
 
         # header window
-        self.w_header = self.scr.subwin(row1_height, self.full_width, row1_y, col1_x)
-        #self.w_header.refresh()
+        self.w_header = self.scr.subwin(
+            row1_height, self.full_width, row1_y, col1_x)
+        # self.w_header.refresh()
 
         # message window, boxed
         self.msg_box = self.scr.subwin(
             row2_height, self.full_width, row2_y, col1_x)
         self.msg_box.box()
-        #self.msg_box.refresh()
+        # self.msg_box.refresh()
 
-        self.w_message = self.scr.subwin(row2_height-2, self.full_width-2, row2_y+1, col1_x+1)
+        self.w_message = self.scr.subwin(
+            row2_height-2, self.full_width-2, row2_y+1, col1_x+1)
         self.w_message.scrollok(True)
-        #self.w_message.refresh()
+        # self.w_message.refresh()
 
         # input window, boxed
-        self.input_box = self.scr.subwin(row3_height, self.full_width, row3_y, col1_x)
+        self.input_box = self.scr.subwin(
+            row3_height, self.full_width, row3_y, col1_x)
         self.input_box.box()
-        self.input_box.addstr(0, self.center(self.helptxt, self.full_width), self.helptxt, self.yellow)
-        #self.input_box.refresh()
+        self.input_box.addstr(0, self.center(
+            self.helptxt, self.full_width), self.helptxt, self.yellow)
+        # self.input_box.refresh()
 
         self.w_input = self.scr.subwin(
             row3_height-2, self.full_width-2, row3_y+1, col1_x+1)
-        #self.w_input.refresh()
+        # self.w_input.refresh()
 
         # status on left, 50% width, boxed
         self.box3 = self.scr.subwin(
             row4_height, col1_width, row4_y, col1_x)
         self.box3.box()
-        #self.box3.refresh()
+        # self.box3.refresh()
 
         self.w_status = self.scr.subwin(
             row4_height-2, col1_width-2, row4_y+1, col1_x+1)
         self.w_status.scrollok(True)
-        #self.w_status.refresh()
+        # self.w_status.refresh()
 
         # raw on right, 50% width, boxed
         self.win3 = self.scr.subwin(
             row4_height, col2_width, row4_y, col2_x)
         self.win3.box()
-        #self.win3.refresh()
+        # self.win3.refresh()
 
         self.w_raw = self.scr.subwin(
             row4_height-2, col2_width-2, row4_y+1, col2_x+1)
         self.w_raw.scrollok(True)
-        #self.w_raw.refresh()
+        # self.w_raw.refresh()
 
         self.scr.refresh()
 
@@ -147,7 +146,8 @@ class RockApp(RockBlockEventHandler):
         height = len(port) + 2*vmargin + 2
         width = 50
         maxl = width - 2*margin
-        w = curses.newwin(height, width, 1, int(self.full_width/2)-int(width/2))
+        w = curses.newwin(height, width, 1, int(
+            self.full_width/2)-int(width/2))
         w.clear()
         w.border()
         w.addstr(0, self.center(title, width), title, self.yellow)
@@ -158,7 +158,7 @@ class RockApp(RockBlockEventHandler):
         w.addstr("To select a port, type its letter (a-z):")
         y, x = w.getyx()
         y += 2
-        
+
         portlist = {}
         for i in range(len(port)):
             w.move(i+y, margin)
@@ -171,7 +171,7 @@ class RockApp(RockBlockEventHandler):
             i += 1
             if i >= 15:
                 break
-            
+
         w.refresh()
 
         # input for port selection
@@ -180,7 +180,7 @@ class RockApp(RockBlockEventHandler):
             if (ord(c) in portlist.keys()):
                 self.device = portlist[ord(c)]
                 break
-        
+
         w.clear()
         w.refresh()
         self.scr.touchwin()
@@ -198,7 +198,6 @@ class RockApp(RockBlockEventHandler):
 
         self.w_status.addstr(message + "\n", color)
         self.w_status.refresh()
-
 
     def print_status(self, status, color=None):
         if color == None:
@@ -226,33 +225,31 @@ class RockApp(RockBlockEventHandler):
         # initialize RockBlock interface
         if self.device == None:
             self.select_port()
-            
+
         # TODO: outbox queue, inbox queue, signal queue, ring alert, background processing/thread/queue
 
         rb = RockBlock(self.device, self)
 
-        polling_interval = 10
-        previous_time = datetime.now() - timedelta(minutes=-1) # force immediate update
+        # initialize rabbitmq connection
+        # 
 
         while True:
             curses.curs_set(0)
 
-            # Character input
-            curses.halfdelay(5)
             try:
                 c = self.w_input.getkey()
-                if c == "q": # quit
+                if c == "q":  # quit
                     rb.close()
                     break
-                elif c == "s": # get signal strength
-                    self.update_signal(rb.get_signal_strength())
-                elif c == "i": # get IMEI
+                elif c == "s":  # get signal strength
+                    self.on_signal(rb.get_signal_strength())
+                elif c == "i":  # get IMEI
                     imei = rb.getSerialIdentifier()
                     self.print_status(imei, self.cyan)
-                elif c == "t": # network time
+                elif c == "t":  # network time
                     tm = rb.get_net_time()
                     self.print_status(str(tm), self.cyan)
-                elif c == "b": # clear MO buffer
+                elif c == "b":  # clear MO buffer
                     if rb._clearMoBuffer():
                         self.print_status("MO buffer clear", self.white)
                     else:
@@ -261,14 +258,14 @@ class RockApp(RockBlockEventHandler):
                         self.print_status("MT buffer clear", self.white)
                     else:
                         self.print_status("MT buffer clear fail", self.red)
-                elif c == "c": # check status
+                elif c == "c":  # check status
                     rb.get_status()
-                elif c == "m": # send message
+                elif c == "m":  # send message
                     self.w_input.addstr(0, 0, "Message> ")
                     curses.curs_set(1)
                     curses.echo()
                     self.w_input.refresh()
-                    self.s = self.w_input.getstr() # read message string
+                    self.s = self.w_input.getstr()  # read message string
                     # TODO: save message if not sent successfully
                     if rb.sendMessage(self.s):
                         my_msg = "me> {}\n".format(self.s.decode('utf-8'))
@@ -280,10 +277,13 @@ class RockApp(RockBlockEventHandler):
                     self.w_input.erase()
                     self.w_input.refresh()
                     self.w_input.move(0, 1)
-                elif c == "r": # receive message
+                elif c == "r":  # receive message
                     rb.messageCheck()
             
-            except Exception as e: # character input timeout
+            except KeyboardInterrupt:
+                break
+
+            except Exception as e:  # character input timeout
                 # Timing intervals
                 elapsed_time = datetime.now() - previous_time
                 if elapsed_time.seconds > polling_interval:
@@ -291,7 +291,8 @@ class RockApp(RockBlockEventHandler):
                     rb_status = rb.get_status()
                     if rb_status.mo_flag == 1
                     previous_time = datetime.now()
-            
+
+
 
     ##
     # String alignment
@@ -313,7 +314,7 @@ class RockApp(RockBlockEventHandler):
     # CALLBACKS
     ##
 
-    def process_serial(self, text):
+    def on_serial(self, text):
         if text != "":
             y, x = self.w_raw.getyx()
             self.w_raw.addstr(y, x, text+"\n", self.cyan)
@@ -321,45 +322,16 @@ class RockApp(RockBlockEventHandler):
             self.w_raw.refresh()
         return
 
-    # def rockBlockRxStarted(self):
-    #     self.print_status("RX Started", self.white)
+    def on_signal(self, signal):
+        return
 
-    # def rockBlockRxFailed(self):
-    #     self.print_status("RX Failed", self.red)
+    def on_status(self, status):
+        return
 
-    # def rockBlockRxReceived(self, mtmsn, msg):
-    #     if not msg == None:
-    #         their_msg = "base> {:s}\n".format(msg)
-    #         self.log.log_message(their_msg)
-    #         self.w_message.addstr(their_msg, self.green)
-    #         self.w_message.refresh()
+    def on_receive(self, text):
+        return
 
-    # def rockBlockRxMessageQueue(self, count):
-    #     self.w_header.addstr(0, 2, "Queue: {}  ".format(str(count)))
-    #     self.w_header.refresh()
-
-    # def rockBlockTxStarted(self):
-    #     self.print_status("TX Started", self.white)
-
-    # def rockBlockTxFailed(self):
-    #     self.print_status("TX Failed", self.red)
-
-    # def rockBlockTxSuccess(self, momsn=0):
-    #     self.print_status("TX Succeeded", self.green)
-    #     self.w_message.refresh()
-
-    # def rockBlockSession(self, mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued):
-    #     self.print_status("MO: status={} msn={}\nMT: status={} msn={} len={} q={}".format(
-    #         mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued), self.white)
-
-    def on_event(self, event):
-        if event.status:
-            color = self.green
-        else:
-            color = self.red
-        self.print_status("Signal: {}".format(event.value), color)
-    
-    def update_signal(self, signal):
+    def on_signal(self, signal):
         s = self.generate_signal_str(signal)
         #self.print_status("Signal: {}".format(s), self.white)
         if signal > 0:
@@ -367,23 +339,6 @@ class RockApp(RockBlockEventHandler):
         else:
             color = self.red
         self.w_header.addstr(0, self.full_width - len(s) - 2, s, color)
-        self.w_header.refresh()
-        return
-
-    ##
-    # CONNECTION
-    ##
-
-    # TODO: fix connection callbacks
-    def rockBlockConnected(self):
-        self.w_header.addstr(0, self.center(
-            self.device, self.full_width), self.device, self.cyan)
-        self.w_header.refresh()
-        return
-
-    def rockBlockDisonnected(self):
-        self.w_header.addstr(0, self.center(
-            self.device), self.device, self.red)
         self.w_header.refresh()
         return
 
