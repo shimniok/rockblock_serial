@@ -8,29 +8,32 @@ const io = require('socket.io')(http, {
   },
 });
 const path = require('path');
+const messaging = require('./messaging.service');
 
-// message data store
-var messages = [
-  { "message": "msg1" }
-];
+// Temporary Data Store
+var messages = [];
 var signal = 0;
-
-// API for updating signal strength info
-app.get('/signal', function(req, res) {
-  console.log("signal");
-});
-
-// API for posting a newly-received message
-app.get('/receive', function(req, res) {
-  console.log('receive');
-  // add to messages: messages.push( ??? )
-  io.emit('messages', messages); // broadcast to all clients
-  res.send("received");
-});
 
 app.get('/', function (req, res) {
   res.sendFile(path.join(__dirname, 'angular-build', 'index.html'));
 });
+
+
+messaging.receive('inbox', function(key, data) {
+  switch (key) {
+    case "status":
+      console.log("status", data);
+      break;
+    case "signal":
+      console.log("signal", data);
+      io.emit("signal", data);
+      break;
+    default:
+      console.log("unknown key:", key);
+      break;
+  }
+}, true);
+
 
 io.on('connection', (socket) => {
   socket.on('send', (message) => {
