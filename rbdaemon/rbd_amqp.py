@@ -98,9 +98,14 @@ class InboxProducer(RBDEventHandler, RabbitClient):
                 )
         return
 
-    def on_receive(self, text):
+    def on_receive(self, message):
         ''' Called when a MT message is received '''
-        self.publish('mt_recv', text)
+        self.publish('mt_recv', message)
+        return
+    
+    def on_sent(self, message):
+        ''' Called when MO message successfully sent '''
+        self.publish('mo_sent', message)
         return
 
     def on_signal(self, signal):
@@ -110,17 +115,17 @@ class InboxProducer(RBDEventHandler, RabbitClient):
 
     def on_status(self, status):
         ''' Called when new status available'''
-        self.publish('status', json.dumps(status.toJSON()))
+        #self.publish('status', json.dumps(status.toJSON()))
         return
 
     def on_session_status(self, status):
         ''' Called when session status available '''
-        self.publish('session_status', json.dumps(status.toJSON()))
+        #self.publish('session_status', json.dumps(status.toJSON()))
         return
 
     def on_error(self, text):
         ''' Called when an error must be passed back '''
-        self.publish('error', text)
+        #self.publish('error', text)
         return
 
     def on_serial(self, text):

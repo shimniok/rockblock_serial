@@ -34,23 +34,25 @@ class RockBlockDaemon(RBDEventHandler):
             sys.exit(1)
         return
 
-    def on_serial(self, text):
+    def on_serial(self, message):
         ''' Callback for serial text input/output '''
-        self.log.debug(" > {}".format(text))
+        self.log.debug(" > {}".format(message))
         #if self.cb:
         #    self.cb.on_serial(text)
         return
 
-    def on_receive(self, text):
+    def on_receive(self, message):
         ''' Called when a MT message is received '''
-        self.log.info("received MT message: <{}>".format(text))
+        self.log.info("received MT message: <{}>".format(message))
         if self.cb:
-            self.cb.on_receive(text)
+            self.cb.on_receive(message)
         return
 
-    def on_sent(self, text):
+    def on_sent(self, message):
         ''' Called when client requests to send MO message '''
-        self.log.info("sent MO message: <{}>".format(text))
+        self.log.info("sent MO message: <{}>".format(message))
+        if self.cb:
+            self.cb.on_sent(message)
         return
 
     def on_signal(self, signal):
@@ -126,8 +128,7 @@ class RockBlockDaemon(RBDEventHandler):
                 # MO message successfully sent to the GSS.
                 if status.mo_status <= 4:
                     self.inbox.enqueue_message(self.mo_message)
-                    # self.on_sent(self.mo_message)
-                    # self.on_receive(self.mo_message) ?
+                    self.on_sent(self.mo_message)
                     self.clear_mo_buffer()
 
                 # MT message successfully received from the GSS.
