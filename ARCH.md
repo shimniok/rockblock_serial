@@ -43,18 +43,16 @@ Using RabbitMQ to decouple write operations against OLTP databases is a common w
 
 Another powerful pattern is for your database to directly publish messages to RabbitMQ. This can be achieved by using extensions or plugins in the database, or by having a RabbitMQ plugin that acts as a database client,  ...
 
-pg_amqp PostgreSQL extension
-
-camel? would need to be running java backend on top of everything else
+pg_amqp PostgreSQL extension ?
 
 
-## routing keys / queues
+## Queues
 
- * MO message
- * MT message
- * signal strength
- * session result: MO result
- * session result: MT result
- * error - multiple types?
- 
- 
+ * Signal Strength: not durable
+   * 'signal' update signal strength, not persistent
+ * Outbox: durable
+   * 'send' send an MO message
+   * 'status' session status mo_status on message
+ * Inbox: durable
+   * 'received' MT messages received, persistent
+

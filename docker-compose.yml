@@ -35,17 +35,14 @@ services:
     build: ./rbdaemon
     networks:
       - rbd_mynet
-    environment:
-      AMQP_HOST: rabbitmq
-      INBOX: inbox
-      OUTBOX: outbox
     restart: always
     devices:
       - "/dev/ttyUSB0:/dev/ttyUSB0"
     environment:
       - AMQP_HOST=rabbitmq
-      - INBOX=inbox
-      - OUTBOX=outbox
+      - INBOX_QUEUE=inbox
+      - OUTBOX_QUEUE=outbox
+      - SIGNAL_QUEUE=signal
       - USER=guest
       - PASS=guest
   

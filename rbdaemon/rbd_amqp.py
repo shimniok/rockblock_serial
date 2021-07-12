@@ -10,8 +10,9 @@ import pika
 import json
 
 HOST = os.environ.get('AMQP_HOST')
-INBOX = os.environ.get('INBOX')
-OUTBOX = os.environ.get('OUTBOX')
+INBOX_QUEUE = os.environ.get('INBOX_QUEUE')
+OUTBOX_QUEUE = os.environ.get('OUTBOX_QUEUE')
+SIGNAL_QUEUE = os.environ.get('SIGNAL_QUEUE')
 USER = os.environ.get('USER')
 PASS = os.environ.get('PASS')
 EXCHANGE = 'rbd_exchange'
@@ -24,18 +25,15 @@ class RabbitClient(object):
             raise ValueError("name not specified")
         return
 
-    def connect_channel(self, queue):
-        print("{}: attempting to connect to {} on {}".format(
-            self.name, queue, HOST))
+    def connect_channel(self):
         creds = pika.PlainCredentials(USER, PASS, True)
         params = pika.ConnectionParameters(host=HOST, credentials=creds)
         connection = pika.BlockingConnection(params)
         self.channel = connection.channel()
-        self.channel.queue_declare(queue=queue, durable=True)
         return self.channel
 
 
-class OutboxConsumer(RabbitClient):
+class RBConsumer(RabbitClient):
 
     def __init__(self, name):
         RabbitClient.__init__(self, name)
@@ -50,11 +48,15 @@ class OutboxConsumer(RabbitClient):
     def run(self):
         ''' Runs the consumer '''
         try:
+            # Set up channel and queue
             print("{}: attempting to connect to {} on {}".format(
-                self.name, OUTBOX, HOST))
-            self.channel = self.connect_channel(OUTBOX)
-            print("{}: setting up basic consume on {}".format(self.name, INBOX))
-            self.channel.basic_consume(OUTBOX, self.on_send, auto_ack=True)
+                self.name, OUTBOX_QUEUE, HOST))
+            self.channel = self.connect_channel()
+            self.channel.queue_declare(queue=OUTBOX_QUEUE, durable=True)
+            
+            # Set up consuming
+            print("{}: setting up basic consume on {}".format(self.name, INBOX_QUEUE))
+            self.channel.basic_consume(OUTBOX_QUEUE, self.on_send, auto_ack=True)
             print("{}: start consuming...".format(self.name))
             self.channel.start_consuming()
         except Exception as e:
@@ -63,7 +65,7 @@ class OutboxConsumer(RabbitClient):
         return
 
 
-class InboxProducer(RBDEventHandler, RabbitClient):
+class RBProducer(RBDEventHandler, RabbitClient):
 
     channel = None
 
@@ -78,21 +80,12 @@ class InboxProducer(RBDEventHandler, RabbitClient):
         print("publishing <{k:}> message to <{x:}>".format(
             x=EXCHANGE, k=routing_key))
 
-        # timestamp = int(time.time())
         message = "{}".format(body)
-
-        # properties = pika.BasicProperties(
-        #     delivery_mode=2,                # makes job persistent
-        #     priority=0,                     # default priority
-        #     timestamp=timestamp,            # timestamp of job creation
-        # )
-
-        #if expiration_ms and expiration_ms.type() == int:
-        #    properties.expiration = str(expiration_ms)
 
         if self.channel:
             self.channel.basic_publish(
-                EXCHANGE, routing_key, 
+                EXCHANGE, 
+                routing_key, 
                 body=message, 
                 #properties=properties
                 )
@@ -136,15 +129,21 @@ class InboxProducer(RBDEventHandler, RabbitClient):
     def run(self):
         ''' Run the rbdaemon with callback to pass data to queue '''
         try:
+            # set up channel and queues
             print("{}: attempting to connect to {} on {}".format(
-                self.name, INBOX, HOST))
-            self.channel = self.connect_channel(INBOX)
+                self.name, INBOX_QUEUE, HOST))
+            self.channel = self.connect_channel()
+            self.channel.queue_declare(queue=INBOX_QUEUE, durable=True)
+            self.channel.queue_declare(queue=SIGNAL_QUEUE, durable=False)
+            
+            # Set up exchange
             print("{}: attempting to bind {} to {}".format(
-                self.name, INBOX, EXCHANGE))
+                self.name, INBOX_QUEUE, EXCHANGE))
             self.channel.exchange_declare(EXCHANGE, durable=True)
-            for key in ['mt_recv', 'signal', 'status', 'session_status', 'error', 'serial']:
-                self.channel.queue_bind(
-                    exchange=EXCHANGE, queue=INBOX, routing_key=key)
+            self.channel.queue_bind(
+                exchange=EXCHANGE, queue=INBOX_QUEUE, routing_key='mt_recv')
+            self.channel.queue_bind(
+                exchange=EXCHANGE, queue=SIGNAL_QUEUE, routing_key='signal')
         except Exception as e:
             print("{}: connection error: {}".format(self.name, e))
             time.sleep(5)
@@ -161,9 +160,9 @@ if __name__ == "__main__":
     print("rbd_amqp: starting")
     time.sleep(10)
 
-    consumer = OutboxConsumer("consumer")  # todo: cmd line parameters
+    consumer = RBConsumer("consumer")  # todo: cmd line parameters
     consumer_thread = threading.Thread(target=consumer.run)
     consumer_thread.start()
 
-    producer = InboxProducer("producer", "/dev/ttyUSB0", "./q")
+    producer = RBProducer("producer", "/dev/ttyUSB0", "./q")
     producer.run()

@@ -21,14 +21,21 @@
 
 Use json for transport of all values:
 { signal: 0 }
+
+Incorporate status as part of MO message object; don't need to pass status data back from rbd
+
+Message 
 {
-  mo_flag: 0,
-  mo_msn: 36,
-  mt_flag: 0,
-  mt_msn: -1,
-  ring: 0,
-  waiting: 0 
+  id: some identifier
+  type: MO or MT
+  timestamp: timestamp
+  text: message text
+  status: 0 == ok, 1 == pending, 2 == error
+  error: mo_status error code
 }
 
-we don't really need to pass back entire status / session status do we? 
-the only thing we need is mo_status tied to specific message
+Signal
+{
+  value: 0-5
+}
+
