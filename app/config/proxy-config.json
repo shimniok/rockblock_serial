@@ -1,7 +1,13 @@
 {
-  "/*": {
-    "target": "http://localhost:4444",
-    "secure": false,
-    "changeOrigin": true
+  "/socket.io/": {
+    "target": "http://localhost:4444/socket.io/",
+    "changeOrigin": true,
+    "ws": true,
+    "logLevel": "debug"
+  },
+  "/**": {
+    "target": "http://localhost:4444/",
+    "changeOrigin": true,
+    "logLevel": "debug"
   }
 }
