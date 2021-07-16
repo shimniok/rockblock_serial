@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Socket } from 'ngx-socket-io';
 // import { map } from 'rxjs/operators';
 
-import { Message } from './message.type';
+import { Message } from '../types/message.type';
 
 @Injectable({
   providedIn: 'root',
@@ -39,6 +39,10 @@ export class MessageService {
   }
 
   sendMessage(msg: string) {
-    this.socket.emit('send', msg);
+    var m: Message;
+
+    m.text = msg;
+
+    this.socket.emit('send', m);
   }
 }

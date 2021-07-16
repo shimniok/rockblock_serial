@@ -4,6 +4,6 @@
 <p>Signal: {{ signal | async }} </p>
 <!-- messages -->
 <ul>
-  <li *ngFor="let m of messages|async">{{ m.from }} > {{ m.message }}</li>
+  <li *ngFor="let m of messages|async">{{ m.text }}</li>
 </ul>
 <hr>

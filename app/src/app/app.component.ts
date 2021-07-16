@@ -1,6 +1,6 @@
 import { Component } from '@angular/core';
-import { MessageService } from 'src/message.service';
-import { Message } from '../message.type';
+import { MessageService } from 'src/app/services/message.service';
+import { Message } from 'src/app/types/message.type';
 import { Observable } from 'rxjs';
 
 @Component({

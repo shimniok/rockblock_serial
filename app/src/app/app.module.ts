@@ -4,7 +4,7 @@ import { HttpClientModule } from '@angular/common/http';
 import { SocketIoModule, SocketIoConfig } from 'ngx-socket-io';
 
 import { AppComponent } from './app.component';
-import { MessageService } from 'src/message.service';
+import { MessageService } from 'src/app/services/message.service';
 
 const config: SocketIoConfig = { url: '/', options: { } };
 
