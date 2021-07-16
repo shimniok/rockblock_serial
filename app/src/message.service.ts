@@ -4,7 +4,7 @@ import { BehaviorSubject, Observable } from 'rxjs';
 import { Socket } from 'ngx-socket-io';
 // import { map } from 'rxjs/operators';
 
-import { Message } from "./message.type";
+import { Message } from './message.type';
 
 @Injectable({
   providedIn: 'root',
@@ -20,14 +20,19 @@ export class MessageService {
   constructor(private http: HttpClient, private socket: Socket) {
     // subscribe to messages events
     this.socket.fromEvent<Message[]>('messages').subscribe(
-      (res) => this._messages.next(res),
+      (res) => {
+        this._messages.next(res);
+      },
       (err) =>
         console.log('MessageService: constructor(): error calling api', err)
     );
 
     // subscribe to signal events
     this.socket.fromEvent<number>('signal').subscribe(
-      (res) => this._signal.next(res),
+      (res) => {
+        console.log('MessageService: signal:', res.valueOf());
+        this._signal.next(res);
+      },
       (err) =>
         console.log('MessageService: constructor(): error calling api', err)
     );
@@ -36,5 +41,4 @@ export class MessageService {
   sendMessage(msg: string) {
     this.socket.emit('send', msg);
   }
-
 }
