@@ -7,3 +7,7 @@
   <li *ngFor="let m of messages|async">{{ m.text }}</li>
 </ul>
 <hr>
+<form method="POST">
+  <input type="text" name="text" [(ngModel)]="text" />
+  <input type="button" name="send" value="Send" (click)="send()"/>
+</form>

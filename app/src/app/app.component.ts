@@ -2,6 +2,7 @@ import { Component } from '@angular/core';
 import { MessageService } from 'src/app/services/message.service';
 import { Message } from 'src/app/types/message.type';
 import { Observable } from 'rxjs';
+import { FormControl, NgForm, NgModel } from '@angular/forms';
 
 @Component({
   selector: 'app-root',
@@ -12,9 +13,16 @@ export class AppComponent {
   title = 'app';
   messages: Observable<Message[]>;
   signal: Observable<number>;
+  text: string;
 
   constructor (private messageService: MessageService) {
     this.messages = messageService.messages;
     this.signal = messageService.signal;
   }
+
+  send() {
+    console.log("app.component: send()");
+    this.messageService.sendMessage(this.text);
+  }
+
 }
