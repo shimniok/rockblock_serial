@@ -18,7 +18,7 @@ export class MessageService {
   public readonly signal: Observable<number> = this._signal.asObservable();
 
   constructor(private http: HttpClient, private socket: Socket) {
-    // subscribe to messages events
+    // subscribe to mt message received events
     this.socket.fromEvent<Message[]>('messages').subscribe(
       (res) => {
         this._messages.next(res);
@@ -39,10 +39,8 @@ export class MessageService {
   }
 
   sendMessage(msg: string) {
-    var m: Message;
-
-    m.text = msg;
-
-    this.socket.emit('send', m);
+    // TODO: determine if disconnect after send happens here
+    console.log('MessageService: send()');
+    this.socket.emit('send', msg);
   }
 }

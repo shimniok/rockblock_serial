@@ -35,6 +35,8 @@ class RabbitClient(object):
 
 class RBConsumer(RabbitClient):
 
+# TODO: dequeue messages when requested by daemon
+
     def __init__(self, name):
         RabbitClient.__init__(self, name)
         return
@@ -42,7 +44,7 @@ class RBConsumer(RabbitClient):
     def on_send(self, channel, method, properties, body):
         ''' Handles message received from queue '''
         message = body.decode('UTF-8')
-        print("{}: message received: body={}".format(self.name, message))
+        print("{}: send message: body={}".format(self.name, message))
         # now pass this onto the RockBlock ?
 
     def run(self):

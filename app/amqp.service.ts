@@ -21,6 +21,7 @@ module.exports = {
           console.log(' [x] Sent %s', msg);
         });
         setTimeout(function () {
+          console.log("server.ts.send() - disconnecting from amqp");
           connection.close();
           process.exit(0);
         }, 500);
