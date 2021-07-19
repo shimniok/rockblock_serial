@@ -9,7 +9,7 @@ const io = require('socket.io')(http, {
   },
 });
 const path = require('path');
-const messaging = require('./amqp.service.ts');
+const messaging = require('./amqp.service.js');
 
 var amqpUrl = 'amqp://localhost/';
 
