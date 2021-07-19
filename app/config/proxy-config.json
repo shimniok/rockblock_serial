@@ -1,6 +1,6 @@
 {
   "/socket.io/": {
-    "target": "http://localhost:4444/socket.io/",
+    "target": "ws://localhost:4444/socket.io/",
     "changeOrigin": true,
     "ws": true,
     "logLevel": "debug"
