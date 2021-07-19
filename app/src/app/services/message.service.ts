@@ -39,7 +39,6 @@ export class MessageService {
   }
 
   sendMessage(msg: string) {
-    // TODO: determine if disconnect after send happens here
     console.log('MessageService: send()');
     this.socket.emit('send', msg);
   }

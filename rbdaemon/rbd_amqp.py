@@ -35,8 +35,6 @@ class RabbitClient(object):
 
 class RBConsumer(RabbitClient):
 
-# TODO: dequeue messages when requested by daemon
-
     def __init__(self, name):
         RabbitClient.__init__(self, name)
         return
@@ -56,6 +54,7 @@ class RBConsumer(RabbitClient):
             self.channel = self.connect_channel()
             self.channel.queue_declare(queue=OUTBOX_QUEUE, durable=True)
             
+            # TODO: dequeue messages when requested by daemon
             # Set up consuming
             print("{}: setting up basic consume on {}".format(self.name, INBOX_QUEUE))
             self.channel.basic_consume(OUTBOX_QUEUE, self.on_send, auto_ack=True)
@@ -88,7 +87,7 @@ class RBProducer(RBDEventHandler, RabbitClient):
             self.channel.basic_publish(
                 EXCHANGE, 
                 routing_key, 
-                body=message, 
+                body=message,
                 #properties=properties
                 )
         return

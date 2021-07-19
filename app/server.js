@@ -35,7 +35,6 @@ amqp.connect(amqpUrl, function (channel) {
       io.emit('messages', messages);
     });
 
-    // TODO: determine if disconnect after send happens here
     socket.on('send', (message) => {
       console.log('server.ts: mo send');
       channel.sendToQueue('outbox', Buffer.from(message));

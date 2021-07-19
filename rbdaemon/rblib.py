@@ -70,6 +70,7 @@ class RockBlockStatus(object):
         }
         return json
 
+
 class RockBlockSessionStatus(object):
     ''' Represents the status of a RockBlock session '''
 
@@ -107,7 +108,6 @@ class RockBlock(object):
             self.s.close()
             self.s = None
 
-
     def serial_readline(self):
         try:
             text = self.s.readline().strip()
@@ -140,13 +140,6 @@ class RockBlock(object):
     ##
     # RB Protocol Methods
     ##
-
-    # def messageCheck(self):
-    #     self.callback.status("Message RX started...",
-    #                          RockBlockProtocol.STATUS_INFO)
-    #     if self.connectionOk():
-    #         # TODO: check for ring alert before attempting session
-    #         self.perform_session()
 
     def sendMessage(self, msg):
         self.callback.status("Message TX started...",
@@ -215,14 +208,6 @@ class RockBlock(object):
     # AT Command Primitives
     ##
 
-    # def ping(self):
-    #     self._verify_serial_connected()
-    #     self.send_command("AT")
-    #     response = self.expect("OK")
-
-    #     return response != None
-
-    # TODO: update signal status from here
     def get_signal_strength(self):
         self._verify_serial_connected()
         self.send_command("AT+CSQ")
@@ -321,7 +306,8 @@ class RockBlock(object):
     def perform_session(self):
         self._verify_serial_connected()
 
-        self.callback.status("session started", RockBlockEventHandler.STATUS_INFO)
+        self.callback.status(
+            "session started", RockBlockEventHandler.STATUS_INFO)
 
         self.send_command("AT+SBDIX")
         # +SBDIX:<MO status>,<MOMSN>,<MT status>,<MTMSN>,<MT length>,<MTqueued>
@@ -343,35 +329,6 @@ class RockBlock(object):
             int(mt_msn),
             int(mt_length),
             int(mt_queued))
-
-        # mo_status = int(parts[0])
-        # mo_msn = int(parts[1])
-        # mt_status = int(parts[2])
-        # mt_msn = int(parts[3])
-        # mt_length = int(parts[4])
-        # mt_queued = int(parts[5])
-
-        # self.callback.rockBlockSession(
-        #     mo_status, mo_msn, mt_status, mt_msn, mt_length, mt_queued)
-
-        # # Mobile Originated
-        # if mo_status <= 4:
-        #     self.clear_mo_buffer()
-
-        # if mt_status == 1 and mt_length > 0:
-        #     # SBD message successfully received from the GSS.
-        #     msg = self.read_mt_buffer()
-        #     self.callback.rockBlockRxReceived(mt_msn, msg)
-        # # TODO: handle mtStatus error values
-
-        # if mo_status <= 4:
-        #     self.callback.status("session succeeded",
-        #                          RockBlockProtocol.STATUS_SUCCESS)
-        #     return True
-        # else:
-        #     self.callback.status(
-        #         "session failed: ".format(self.mo_status_to_string(mo_status)), RockBlockProtocol.STATUS_ERROR)
-        #     return False
 
     def read_mt_buffer(self):
         self._verify_serial_connected()
