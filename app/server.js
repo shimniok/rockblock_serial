@@ -9,7 +9,7 @@ const io = require('socket.io')(http, {
   },
 });
 const path = require('path');
-const messaging = require('./amqp.service.js');
+const amqp = require('./amqp.service.js');
 
 var amqpUrl = 'amqp://localhost/';
 
@@ -21,18 +21,18 @@ app.get('/', function (req, res) {
 });
 
 // AMQP
-messaging.connect(amqpUrl, function (channel) {
+amqp.connect(amqpUrl, function (channel) {
   // SocketIO Events
   io.on('connection', (socket) => {
-    messaging.receive(channel, 'signal', false, (key, data) => {
+    amqp.receive(channel, 'signal', false, (key, data) => {
       console.log('server.ts: signal recv key =', key, 'data =', data);
       io.emit('signal', data);
     });
 
-    messaging.receive(channel, 'messages', false, (key, data) => {
+    amqp.receive(channel, 'inbox', true, (key, data) => {
       console.log('server.ts: messages recv key =', key, 'data=', data);
       messages.push(data);
-      io.emit('messages', data);
+      io.emit('messages', messages);
     });
 
     // TODO: determine if disconnect after send happens here

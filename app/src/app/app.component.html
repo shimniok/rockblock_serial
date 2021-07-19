@@ -4,7 +4,7 @@
 <p>Signal: {{ signal | async }} </p>
 <!-- messages -->
 <ul>
-  <li *ngFor="let m of messages|async">{{ m.text }}</li>
+  <li *ngFor="let m of messages|async">{{ m }}</li>
 </ul>
 <hr>
 <form method="POST">
