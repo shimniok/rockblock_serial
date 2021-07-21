@@ -1,14 +1,10 @@
-import datetime
 import os
-from file_queue import FileQueue
-
-from rblib import RockBlockEventHandler
-from rbd import RockBlockDaemon
-from rbd_event_handler import RBDEventHandler
-import threading
 import time
 import pika
 import json
+from rbd import RockBlockDaemon
+from rbd_event_handler import RBDEventHandler
+from event_logging import EventLog
 
 HOST = os.environ.get('AMQP_HOST')
 INBOX_QUEUE = os.environ.get('INBOX_QUEUE')
@@ -19,66 +15,20 @@ PASS = os.environ.get('PASS')
 EXCHANGE = 'rbd_exchange'
 
 
-# class RabbitClient(object):
-#     def __init__(self, name=None):
-#         self.name = name
-#         if not name:
-#             raise ValueError("name not specified")
-#         return
-
-#     def connect_channel(self):
-#         creds = pika.PlainCredentials(USER, PASS, True)
-#         params = pika.ConnectionParameters(host=HOST, credentials=creds)
-#         connection = pika.BlockingConnection(params)
-#         self.channel = connection.channel()
-#         return self.channel
-
-
-# class RBConsumer(RabbitClient):
-
-#     def __init__(self, name):
-#         RabbitClient.__init__(self, name)
-#         # from appdirs import user_data_dir
-#         # self.q = FileQueue('./q')
-#         return
-
-#     def on_send(self, channel, method, properties, body):
-#         ''' Handles message received from queue '''
-#         message = body.decode('UTF-8')
-#         print("{}: send message: body={}".format(self.name, message))
-
-
-#     def run(self):
-#         ''' Runs the consumer '''
-#         try:
-#             # Set up channel and queue
-#             print("{}: attempting to connect to {} on {}".format(
-#                 self.name, OUTBOX_QUEUE, HOST))
-#             self.channel = self.connect_channel()
-#             self.channel.queue_declare(queue=OUTBOX_QUEUE, durable=True)
-
-#             # Set up consuming
-#             print("{}: setting up basic consume on {}".format(
-#                 self.name, INBOX_QUEUE))
-#             self.channel.basic_consume(
-#                 OUTBOX_QUEUE, self.on_send, auto_ack=True)
-#             print("{}: start consuming...".format(self.name))
-#             self.channel.start_consuming()
-
-#         except Exception as e:
-#             print("{}: connection error: {}".format(self.name, e))
-#             time.sleep(5)
-#         return
-
-
 class RBRabbitMQClient(RBDEventHandler):
 
     channel = None
 
-    def __init__(self, device=None):
-        # RabbitClient.__init__(self, name)
+    def __init__(self, device=None, log_level=EventLog.DEBUG):
         self.name = "rbd/amqp"
         self.device = device
+        self.log = EventLog(level=EventLog.DEBUG)
+        self.rbd = RockBlockDaemon(
+            device=self.device,
+            polling_interval=5,
+            event_handler=self,
+            log_level=log_level)
+
         return
 
     def publish(self, routing_key, body, expiration_ms=None):
@@ -161,9 +111,6 @@ class RBRabbitMQClient(RBDEventHandler):
             print("{}: connection error: {}".format(self.name, e))
             time.sleep(5)
 
-        self.rbd = RockBlockDaemon(
-            device=self.device, polling_interval=5, event_handler=self)
-
         self.rbd.run()
 
         return
@@ -173,9 +120,6 @@ if __name__ == "__main__":
     print("rbd_amqp: starting")
     time.sleep(10)
 
-    # consumer = RBConsumer("rbd_consumer")  # todo: cmd line parameters
-    # consumer_thread = threading.Thread(target=consumer.run)
-    # consumer_thread.start()
-
-    producer = RBRabbitMQClient(device="/dev/ttyUSB0")
-    producer.run()
+    runner = RBRabbitMQClient(device="/dev/ttyUSB0",
+                              log_level=EventLog.DEBUG)
+    runner.run()
