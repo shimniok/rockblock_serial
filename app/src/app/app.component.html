@@ -3,6 +3,8 @@
 <!-- signal -->
 <p>Signal: {{ signal | async }} </p>
 <!-- messages -->
+<hr>
+<h2>Messages</h2>
 <ul>
   <li *ngFor="let m of messages|async">{{ m }}</li>
 </ul>
@@ -11,3 +13,5 @@
   <input type="text" name="text" [(ngModel)]="text" />
   <input type="button" name="send" value="Send" (click)="send()"/>
 </form>
+
+<!-- TODO: make HTML UI fancy -->
