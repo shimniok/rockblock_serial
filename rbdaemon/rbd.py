@@ -102,12 +102,12 @@ class RockBlockDaemon(RBDEventHandler):
 
     def _send_and_receive(self):
         try:
-            self.log.debug("get signal strength")
+            self.log.debug("getting signal strength")
             signal = self.rb.get_signal_strength()
             self.on_signal(signal)
 
             # any incoming or outgoing messages?
-            self.log.debug("get status")
+            self.log.debug("getting status")
             status = self.rb.get_status()
             self.on_status(status)
 
@@ -144,7 +144,7 @@ class RockBlockDaemon(RBDEventHandler):
                         status.mo_status, status.mt_status))
 
         except SerialException as e:
-            self.log.error("serial: {}".format(e))
+            self.log.error("serial error: {}".format(e))
             # TODO: automatic reconnect
             pass
         
@@ -158,7 +158,7 @@ class RockBlockDaemon(RBDEventHandler):
         return
 
     def run(self):
-        self.log.debug("polling loop begin")
+        self.log.info("serial polling loop begin")
         try:
             while True:
                 self._send_and_receive()
