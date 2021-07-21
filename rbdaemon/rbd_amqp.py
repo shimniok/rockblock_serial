@@ -20,7 +20,6 @@ class RBRabbitMQClient(RBDEventHandler):
     channel = None
 
     def __init__(self, device=None, log_level=EventLog.DEBUG):
-        self.name = "rbd/amqp"
         self.device = device
         self.log = EventLog(level=EventLog.DEBUG)
         self.rbd = RockBlockDaemon(
@@ -33,14 +32,13 @@ class RBRabbitMQClient(RBDEventHandler):
 
     def publish(self, routing_key, body, expiration_ms=None):
         ''' Publish message to exchange '''
-        print("publishing <{k:}> message to <{x:}>".format(
-            x=EXCHANGE, k=routing_key))
-        message = "{}".format(body)
+        self.log.debug("publishing <{b:}>, <{k:}> to <{x:}>".format(
+            x=EXCHANGE, k=routing_key, b=body))
         if self.channel:
             self.channel.basic_publish(
                 EXCHANGE,
                 routing_key,
-                body=message,
+                body="{}".format(body),
                 # properties=properties
             )
         return
@@ -89,8 +87,7 @@ class RBRabbitMQClient(RBDEventHandler):
         ''' Run the rbdaemon with callback to pass data to queue '''
         try:
             # set up channel and queues
-            print("{}: attempting to connect to {} on {}".format(
-                self.name, INBOX_QUEUE, HOST))
+            self.log.info("connecting to amqp on {}".format(HOST))
 
             creds = pika.PlainCredentials(USER, PASS, True)
             params = pika.ConnectionParameters(host=HOST, credentials=creds)
@@ -108,7 +105,7 @@ class RBRabbitMQClient(RBDEventHandler):
                 exchange=EXCHANGE, queue=SIGNAL_QUEUE, routing_key='signal')
 
         except Exception as e:
-            print("{}: connection error: {}".format(self.name, e))
+            self.log.error("error while connecting to amqp: {}".format(e))
             time.sleep(5)
 
         self.rbd.run()
