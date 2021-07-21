@@ -4,27 +4,22 @@ import time
 from event_logging import EventLog
 from serial.serialutil import SerialException
 from rblib import RockBlock
-from file_queue import FileQueue
 from event_logging import EventLog
 from rbd_event_handler import RBDEventHandler
 
 
 class RockBlockDaemon(RBDEventHandler):
 
-    def __init__(self, device, queue_dir, polling_interval=5, log_level=EventLog.DEBUG, callback=None):
+    def __init__(self, device=None, polling_interval=5, log_level=EventLog.DEBUG, event_handler=None):
         self.log = EventLog(level=log_level)
         self.polling_interval = polling_interval
-        self.log.info("initialize queue")
-        if not os.path.exists(queue_dir):
-            os.mkdir(queue_dir)
 
-        self.outbox = FileQueue(queue_dir+"/outbox")
-        self.inbox = FileQueue(queue_dir+"/inbox")
-        self.sent = FileQueue(queue_dir+"/sent")
+        if not event_handler:
+            raise ValueError("event_handler not defined")
+
+        self.cb = event_handler
 
         self.mo_message = None
-
-        self.cb = callback
 
         try:
             self.log.info("initialize serial")
@@ -34,40 +29,48 @@ class RockBlockDaemon(RBDEventHandler):
             sys.exit(1)
         return
 
-    def on_serial(self, message):
-        ''' Callback for serial text input/output '''
-        self.log.debug(" > {}".format(message))
-        #if self.cb:
-        #    self.cb.on_serial(text)
-        return
+    #
+    # Events
+    #
 
     def on_receive(self, message):
         ''' Called when a MT message is received '''
         self.log.info("received MT message: <{}>".format(message))
-        if self.cb:
-            self.cb.on_receive(message)
+        self.cb.on_receive(message)
         return
 
     def on_sent(self, message):
         ''' Called when client requests to send MO message '''
         self.log.info("sent MO message: <{}>".format(message))
-        if self.cb:
-            self.cb.on_sent(message)
+        self.cb.on_sent(message)
         return
+
+    def on_ready_to_send(self):
+        ''' Called when daemon is ready to dequeue message to send '''
+        message = self.cb.on_ready_to_send()
+        if message:
+            self.log.info("ready to send: <{}>".format(message))
+        else:
+            self.log.debug("outbox queue empty")
+        return message
 
     def on_signal(self, signal):
         ''' Called when signal strength updated '''
         self.log.debug("signal={}".format(signal))
-        if self.cb:
-            self.cb.on_signal(signal)
+        self.cb.on_signal(signal)
+        return
+
+    def on_serial(self, message):
+        ''' Callback for serial text input/output '''
+        self.log.debug(" > {}".format(message))
+        # self.cb.on_serial(text)
         return
 
     def on_status(self, status):
         ''' Called when new status available '''
         self.log.debug("status: mo_flag={} mt_flag={} ring={}".format(
             status.mo_flag, status.mt_flag, status.ring))
-        if self.cb:
-            self.cb.on_status(status)
+        # self.cb.on_status(status)
         return
 
     def on_session_status(self, status):
@@ -77,23 +80,24 @@ class RockBlockDaemon(RBDEventHandler):
             status.mt_flag,
             status.mt_length,
             status.waiting))
-        if self.cb:
-            self.cb.on_session_status(status)
+        # self.cb.on_session_status(status)
         return
 
     def on_error(self, text):
         self.log.error(text)
-        if self.cb:
-            self.cb.on_error(text)
+        # self.cb.on_error(text)
         return
 
+    #
+    # Other Stuff
+    #
+    
     def _retrieve_mt_message(self):
         self.log.debug("reading mt buffer")
         msg = self.rb.read_mt_buffer()
         if msg:
             self.on_receive(msg)
             self.rb.clear_mt_buffer()
-            self.inbox.enqueue_message(msg)
         return
 
     def _send_and_receive(self):
@@ -114,7 +118,7 @@ class RockBlockDaemon(RBDEventHandler):
             # no outgoing messages, check queue
             if status.mo_flag == 0:
                 self.log.debug("check queue")
-                self.mo_message = self.outbox.dequeue_message()
+                self.mo_message = self.on_ready_to_send()
                 if self.mo_message:
                     self.log.debug("writing mo buffer")
                     self.rb.write_mo_buffer(self.mo_message)
@@ -148,6 +152,11 @@ class RockBlockDaemon(RBDEventHandler):
             self.log.error(e)
             pass
 
+    def enqueue_mo_message(self, message):
+        ''' Enqueue an MO message to be sent later '''
+        self.outbox.enqueue_message(message)
+        return
+
     def run(self):
         self.log.debug("polling loop begin")
         try:
@@ -161,5 +170,5 @@ class RockBlockDaemon(RBDEventHandler):
     
 
 if __name__ == "__main__":
-    daemon = RockBlockDaemon("/dev/ttyUSB0", "./q")
+    daemon = RockBlockDaemon(device="/dev/ttyUSB0")
     daemon.run()

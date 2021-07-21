@@ -10,6 +10,9 @@ class RBDEventHandler(RockBlockEventHandler):
     # Called when MO message successfully sent
     def on_sent(self, message): pass
 
+    # Called when ready to send MO message, returns message or None
+    def on_ready_to_send(self): pass
+
     # Called when a MT message is received
     def on_receive(self, message): pass
 
@@ -20,10 +23,10 @@ class RBDEventHandler(RockBlockEventHandler):
     #def on_status(self, status): pass
 
     # Called when session status available 
-    def on_session_status(self, status): pass
+    # def on_session_status(self, status): pass
 
     # Called when an error must be passed back
-    def on_error(self, message): pass
+    # def on_error(self, message): pass
 
     # process serial bytes that are sent/received to/from RockBlock
     #def on_serial(self, text): pass
