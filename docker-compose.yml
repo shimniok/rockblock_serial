@@ -46,19 +46,13 @@ services:
       - USER=guest
       - PASS=guest
   
-
-  # rabbit-producer:
-  #   hostname: rabbit-producer
-  #   container_name: rabbit-producer
-  #   depends_on:
-  #     - rabbitmq
-  #   build: ./producer/
-  #   ports:
-  #     - "3000:3000"
-  #   networks:
-  #     - mynet
-  #   environment:
-  #     AMQP_HOST: rabbitmq
-  #     INBOX: inbox
-  #     OUTBOX: outbox
-  #   restart: always
+# TODO: add angular/node client application
+  webapp:
+    container_name: webapp
+    depends_on:
+      - rockblock-daemon
+    build: ./app
+    networks:
+      - rbd_mynet
+    restart: always
+    
