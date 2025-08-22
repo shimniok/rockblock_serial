@@ -1,6 +1,6 @@
 appdirs==1.4.4
 autopep8==1.5.7
-future==0.18.2
+future==1.0.0
 iso8601==0.1.14
 pycodestyle==2.7.0
 pyserial==3.5
